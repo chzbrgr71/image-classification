@@ -4,4 +4,4 @@ WORKDIR /tf_output
 
 EXPOSE 6006
 
-CMD ["/usr/local/bin/tensorboard","--logdir","/tf_output/model/training_summaries"]
+CMD ["/usr/local/bin/tensorboard","--logdir","/tmp/tensorflow/training_summaries"]

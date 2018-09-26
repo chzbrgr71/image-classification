@@ -1,0 +1,77 @@
+apiVersion: kubeflow.org/v1alpha2
+kind: TFJob
+metadata:
+  name: tf-image-retraining
+spec:
+  tfReplicaSpecs:
+    MASTER:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - image: chzbrgr71/image-retrain:1.2
+              name: tensorflow
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - name: azurefile
+                  subPath: tf-image-retraining
+                  mountPath: /tmp/tensorflow
+          restartPolicy: OnFailure
+          volumes:
+            - name: azurefile
+              persistentVolumeClaim:
+                claimName: azurefile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tensorboard-image-retraining
+  labels:
+    name: tensorboard-image-retraining
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 6006
+  selector:
+    app: tensorboard-image-retraining
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: tensorboard-image-retraining
+  name: tensorboard-image-retraining
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tensorboard-image-retraining
+  template:
+    metadata:
+      labels:
+        app: tensorboard-image-retraining
+    spec:
+      volumes:
+        - name: azurefile
+          persistentVolumeClaim:
+            claimName: azurefile
+      containers:
+        - name: tensorflow
+          image: tensorflow/tensorflow:1.10.0
+          imagePullPolicy: Always
+          command:
+            - /usr/local/bin/tensorboard
+          args:
+            - --logdir
+            - /tmp/tensorflow/training_summaries
+          volumeMounts:
+            - mountPath: /tmp/tensorflow
+              subPath: tf-image-retraining
+              name: azurefile
+          ports:
+            - containerPort: 6006
+              protocol: TCP
