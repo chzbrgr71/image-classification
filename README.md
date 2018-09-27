@@ -19,7 +19,7 @@
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.1
+    export IMAGE_TAG=1.2
 
     # build
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./Dockerfile.tensorboard .
@@ -29,6 +29,22 @@
 
     # run
     docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tmp/tensorflow chzbrgr71/tensorboard:$IMAGE_TAG
+    ```
+
+* Run Model
+    ```bash
+    export IMAGE_TAG=1.2
+
+    # build
+    docker build -t chzbrgr71/run-model:$IMAGE_TAG -f ./Dockerfile.run .
+
+    # run
+    docker run -it --rm --name run chzbrgr71/run-model:$IMAGE_TAG
+
+    root@016bdde8ecb1:/# python run-model.py edsheeran.jpg
+    I am confident this is Ed Sheeran (0.96276665)
+    root@016bdde8ecb1:/# python run-model.py bradpitt.jpg
+    This is not Ed Sheeran (0.050988954)
     ```
 
 ### Setup Kubernetes

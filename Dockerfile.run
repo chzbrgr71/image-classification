@@ -2,7 +2,9 @@ FROM tensorflow/tensorflow:1.9.0
 
 WORKDIR /
 
-COPY ./model/retrained_graph.pb /retrained_graph.pb
-COPY ./model/retrained_labels.txt /retrained_labels.txt
+COPY ./tf-output/retrained_graph.pb /retrained_graph.pb
+COPY ./tf-output/retrained_labels.txt /retrained_labels.txt
 COPY ./run-model.py /run-model.py
-COPY ./*.jpg /
+COPY ./tf-output/*.jpg /
+
+ENTRYPOINT bash
