@@ -5,41 +5,38 @@
 
 * Training
     ```bash
-    export IMAGE_TAG=1.2
+    export IMAGE_TAG=1.5
 
     # build
-    docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./Dockerfile.train .
+    docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
 
     # push
     docker push chzbrgr71/image-retrain:$IMAGE_TAG
 
     # run
-    docker run -d --name tf-images -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tmp/tensorflow chzbrgr71/image-retrain:$IMAGE_TAG
+    docker run -d --name train -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tmp/tensorflow --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/image-retrain:$IMAGE_TAG
     ```
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.2
+    export IMAGE_TAG=1.5
 
     # build
-    docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./Dockerfile.tensorboard .
+    docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
 
     # push
     docker push chzbrgr71/tensorboard:$IMAGE_TAG
 
     # run
-    docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tmp/tensorflow chzbrgr71/tensorboard:$IMAGE_TAG
+    docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/tensorboard:$IMAGE_TAG
     ```
 
 * Label Image with Trained Model
     ```bash
-    export IMAGE_TAG=1.2
+    export IMAGE_TAG=1.5
 
     # build
-    docker build -t chzbrgr71/tf-label-image:$IMAGE_TAG -f ./Dockerfile.label .
-
-    # push
-    docker push chzbrgr71/tf-label-image:$IMAGE_TAG
+    docker build -t chzbrgr71/tf-label-image:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
 
     # run
     docker run -it --rm --name tf-label-image chzbrgr71/tf-label-image:$IMAGE_TAG
@@ -107,7 +104,7 @@
 
     Setup storage account for Azure Files
     ```bash
-    export RG_NAME=briar-ml-104
+    export RG_NAME=briar-ml-104-prom
     export STORAGE=briartfjobstorage
 
     az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
@@ -115,9 +112,11 @@
 
     Setup StorageClass, Roles, and PVC's
     ```bash
-    kubectl create -f ./k8s-setup/azure-file-sc.yaml
     kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
+
+    kubectl create -f ./k8s-setup/azure-file-sc.yaml
     kubectl create -f ./k8s-setup/azure-file-pvc.yaml
+
     kubectl create -f ./k8s-setup/azure-disk-pvc.yaml
     ```
 
