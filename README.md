@@ -31,19 +31,19 @@
     docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tmp/tensorflow chzbrgr71/tensorboard:$IMAGE_TAG
     ```
 
-* Run Model
+* Label Image with Trained Model
     ```bash
     export IMAGE_TAG=1.2
 
     # build
-    docker build -t chzbrgr71/run-model:$IMAGE_TAG -f ./Dockerfile.run .
+    docker build -t chzbrgr71/tf-label-image:$IMAGE_TAG -f ./Dockerfile.label .
 
     # run
-    docker run -it --rm --name run chzbrgr71/run-model:$IMAGE_TAG
+    docker run -it --rm --name tf-label-image chzbrgr71/tf-label-image:$IMAGE_TAG
 
-    root@016bdde8ecb1:/# python run-model.py edsheeran.jpg
+    root@016bdde8ecb1:/# python label-image.py edsheeran.jpg
     I am confident this is Ed Sheeran (0.96276665)
-    root@016bdde8ecb1:/# python run-model.py bradpitt.jpg
+    root@016bdde8ecb1:/# python label-image.py bradpitt.jpg
     This is not Ed Sheeran (0.050988954)
     ```
 
@@ -68,7 +68,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet1
+    APP_NAME=kf-ksonnet2
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -86,11 +86,7 @@
     # Customize Kubeflow's installation for AKS or acs-engine
     # ks param set kubeflow-core cloud aks
     ks param set kubeflow-core cloud acsengine
-
-    # Enable collection of anonymous usage metrics
-    # Skip this step if you don't want to enable collection.
-    ks param set kubeflow-core reportUsage true
-    ks param set kubeflow-core usageId $(uuidgen)
+    ks param set kubeflow-core jupyterHubServiceType LoadBalancer
 
     # Deploy Kubeflow
     ks apply default -c kubeflow-core
@@ -99,34 +95,36 @@
     kubectl get pods -n kubeflow
     ```
 
-* Set JupyterHub to LoadBalancer
-    ```bash
-    ks param set kubeflow-core jupyterHubServiceType LoadBalancer
-    ks apply default
-    ```
-
 
 ### Setup Azure Storage
 
 * Setup PVC components to persist data in pods
 
+    https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
+
+    Setup storage account
     ```bash
-    # setup storage account
     export RG_NAME=briar-ml-103
     export STORAGE=briartfjobstorage
 
     az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
+    ```
 
-    # setup StorageClass, Roles, and PVC
+    Setup StorageClass, Roles, and PVC's
+    ```bash
     kubectl create -f ./k8s-setup/azure-file-sc.yaml
     kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
     kubectl create -f ./k8s-setup/azure-file-pvc.yaml
+    kubectl create -f ./k8s-setup/azure-disk-pvc.yaml
+    ```
 
-    # check status
-    kubectl get pvc azurefile
+    Check status
+    ```bash
+    kubectl get pvc
 
-    NAME        STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-    azurefile   Bound     pvc-b95edfeb-c1bb-11e8-b9a1-000d3a1f8011   5Gi        RWX            kfazurefile    10s
+    NAME                STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+    azurefile           Bound     pvc-b95edfeb-c1bb-11e8-b9a1-000d3a1f8011   5Gi        RWX            kfazurefile    10s
+    azure-managed-disk  Bound     pvc-7bdb43d3-c561-11e8-8100-000d3a4f8d42   5Gi        RWO            managed-premium    7h
     ```
 
 
@@ -134,6 +132,13 @@
 
 * Deploy TFJob and tensorboard
 
+    With Azure Files
     ```
-    kubectl create -f ./kubeflow/train-model-tfjob.yaml
+    kubectl create -f ./kubeflow/train-model-tfjob-azurefiles.yaml
+    ```
+
+    With Azure Disk (cannot run at the same time)
+    ```
+    kubectl create -f ./kubeflow/train-model-tfjob-azuredisk.yaml
+    kubectl create -f ./kubeflow/tensorboard-standalone.yaml
     ```

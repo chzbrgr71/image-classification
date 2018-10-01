@@ -1,0 +1,25 @@
+apiVersion: kubeflow.org/v1alpha2
+kind: TFJob
+metadata:
+  name: tf-image-retraining
+spec:
+  tfReplicaSpecs:
+    MASTER:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - image: chzbrgr71/image-retrain:1.2
+              name: tensorflow
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - name: azure-managed-disk
+                  subPath: tf-image-retraining
+                  mountPath: /tmp/tensorflow
+          restartPolicy: OnFailure
+          volumes:
+            - name: azure-managed-disk
+              persistentVolumeClaim:
+                claimName: azure-managed-disk

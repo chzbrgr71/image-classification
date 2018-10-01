@@ -4,7 +4,7 @@ WORKDIR /
 
 COPY ./tf-output/retrained_graph.pb /retrained_graph.pb
 COPY ./tf-output/retrained_labels.txt /retrained_labels.txt
-COPY ./run-model.py /run-model.py
+COPY ./run-model.py /label-image.py
 COPY ./tf-output/*.jpg /
 
 ENTRYPOINT bash
