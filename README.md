@@ -38,6 +38,9 @@
     # build
     docker build -t chzbrgr71/tf-label-image:$IMAGE_TAG -f ./Dockerfile.label .
 
+    # push
+    docker push chzbrgr71/tf-label-image:$IMAGE_TAG
+
     # run
     docker run -it --rm --name tf-label-image chzbrgr71/tf-label-image:$IMAGE_TAG
 
@@ -102,9 +105,9 @@
 
     https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
 
-    Setup storage account
+    Setup storage account for Azure Files
     ```bash
-    export RG_NAME=briar-ml-103
+    export RG_NAME=briar-ml-104
     export STORAGE=briartfjobstorage
 
     az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
