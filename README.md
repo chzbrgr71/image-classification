@@ -5,8 +5,8 @@
 
 * Training
     ```bash
-    export IMAGE_TAG=1.6
-    export IMAGE_TAG=1.6-gpu
+    export IMAGE_TAG=1.7
+    export IMAGE_TAG=1.7-gpu
 
     # build
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
@@ -16,11 +16,13 @@
 
     # run
     docker run -d --name train -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/image-retrain:$IMAGE_TAG
+
+    docker run -d --name train --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/image-retrain:$IMAGE_TAG "--bottleneck_dir=/model/bottlenecks" "--model_dir=/model/inception" "--summaries_dir=/model/training_summaries/long" "--output_graph=/model/retrained_graph.pb" "--output_labels=/model/retrained_labels.txt" "--image_dir=images"
     ```
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.6
+    export IMAGE_TAG=1.7
 
     # build
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
@@ -30,24 +32,23 @@
 
     # run
     docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/tensorboard:$IMAGE_TAG
+
+    docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/tensorboard:$IMAGE_TAG "--logdir" "/tf-output/training_summaries"
     ```
 
 * Label Image with Trained Model
     ```bash
-    export IMAGE_TAG=1.6
+    export IMAGE_TAG=1.71
 
     # build
-    docker build -t chzbrgr71/tf-label-image:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
-
-    docker build -t chzbrgr71/tf-testing:$IMAGE_TAG -f ./label-image/Dockerfile.test ./label-image
+    docker build -t chzbrgr71/tf-testing:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
 
     # run
-    docker run -it --rm --name tf-label-image chzbrgr71/tf-label-image:$IMAGE_TAG
+    docker run --rm --name tf-testing --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image:/image chzbrgr71/tf-testing:$IMAGE_TAG /image/edsheeran.jpg
+    I am confident this is Ed Sheeran (0.962828)
 
-    root@016bdde8ecb1:/# python label-image.py edsheeran.jpg
-    I am confident this is Ed Sheeran (0.96276665)
-    root@016bdde8ecb1:/# python label-image.py bradpitt.jpg
-    This is not Ed Sheeran (0.050988954)
+    docker run --rm --name tf-testing --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image:/image chzbrgr71/tf-testing:$IMAGE_TAG /image/bradpitt.jpg
+    This is not Ed Sheeran (0.048971623)
     ```
 
 ### Setup Kubernetes
@@ -55,6 +56,9 @@
 * Using [acs-engine](https://github.com/Azure/acs-engine) with kubernetes v1.11.3
 * Grafana/Prometheus add-on. https://github.com/Azure/acs-engine/tree/master/extensions/prometheus-grafana-k8s 
 
+    ```
+    echo $(kubectl get secret dashboard-grafana -o jsonpath="{.data.grafana-admin-password}" | base64 --decode)
+    ```
 
 ### Install Kubeflow
 
@@ -72,7 +76,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet3
+    APP_NAME=kf-ksonnet4
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -108,7 +112,7 @@
 
     Setup storage account for Azure Files
     ```bash
-    export RG_NAME=briar-ml-105
+    export RG_NAME=briar-ml-106
     export STORAGE=briartfjobstorage
 
     az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
@@ -147,15 +151,14 @@
     kubectl create -f ./kubeflow/train-model-tfjob-azuredisk.yaml
     kubectl create -f ./kubeflow/tensorboard-standalone.yaml
 
-    kubectl cp default/tensorboard-image-retraining-65478c9847-kpb4z:/model/retrained_graph.pb /Users/brianredmond/Downloads/retrained_graph.pb
-    kubectl cp default/tensorboard-image-retraining-65478c9847-kpb4z:/model/retrained_labels.txt /Users/brianredmond/Downloads/retrained_labels.txt
-
-    kubectl create -f ./kubeflow/model-testing.yaml
+    # to download model from pod
+    PODNAME=tensorboard-image-retraining-5fcdff966c-88zll
+    kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb /Users/brianredmond/Downloads/retrained_graph.pb
+    kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt /Users/brianredmond/Downloads/retrained_labels.txt
     ```
 
-    Mixed
+    Mixed (not working)
     ```bash
     kubectl create -f ./kubeflow/train-model-tfjob-mixed.yaml
-
     kubectl delete -f ./kubeflow/train-model-tfjob-mixed.yaml
     ```
