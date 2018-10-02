@@ -1,7 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tf-azure-disk
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 8Gi
+---
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob
 metadata:
-  name: tf-image-retraining
+  name: tf-image-retraining-disk
 spec:
   tfReplicaSpecs:
     MASTER:
@@ -9,17 +21,16 @@ spec:
       template:
         spec:
           containers:
-            - image: chzbrgr71/image-retrain:1.2
+            - image: chzbrgr71/image-retrain:1.6-gpu
               name: tensorflow
               resources:
                 limits:
                   nvidia.com/gpu: 1
               volumeMounts:
-                - name: azure-managed-disk
-                  subPath: tf-image-retraining
-                  mountPath: /tmp/tensorflow
+                - name: tf-azure-disk
+                  mountPath: /model
           restartPolicy: OnFailure
           volumes:
-            - name: azure-managed-disk
+            - name: tf-azure-disk
               persistentVolumeClaim:
-                claimName: azure-managed-disk
+                claimName: tf-azure-disk

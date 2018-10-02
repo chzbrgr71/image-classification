@@ -30,22 +30,16 @@ spec:
         app: tensorboard-image-retraining
     spec:
       volumes:
-        - name: azure-managed-disk
+        - name: tf-azure-disk
           persistentVolumeClaim:
-            claimName: azure-managed-disk
+            claimName: tf-azure-disk
       containers:
         - name: tensorflow
-          image: tensorflow/tensorflow:1.10.0
+          image: chzbrgr71/tensorboard:1.6
           imagePullPolicy: Always
-          command:
-            - /usr/local/bin/tensorboard
-          args:
-            - --logdir
-            - /tmp/tensorflow/training_summaries
           volumeMounts:
-            - mountPath: /tmp/tensorflow
-              subPath: tf-image-retraining
-              name: azure-managed-disk
+            - mountPath: /model
+              name: tf-azure-disk
           ports:
             - containerPort: 6006
               protocol: TCP

@@ -5,7 +5,8 @@
 
 * Training
     ```bash
-    export IMAGE_TAG=1.5
+    export IMAGE_TAG=1.6
+    export IMAGE_TAG=1.6-gpu
 
     # build
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
@@ -14,12 +15,12 @@
     docker push chzbrgr71/image-retrain:$IMAGE_TAG
 
     # run
-    docker run -d --name train -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tmp/tensorflow --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/image-retrain:$IMAGE_TAG
+    docker run -d --name train -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/image-retrain:$IMAGE_TAG
     ```
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.5
+    export IMAGE_TAG=1.6
 
     # build
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
@@ -28,15 +29,17 @@
     docker push chzbrgr71/tensorboard:$IMAGE_TAG
 
     # run
-    docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/tensorboard:$IMAGE_TAG
+    docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/tensorboard:$IMAGE_TAG
     ```
 
 * Label Image with Trained Model
     ```bash
-    export IMAGE_TAG=1.5
+    export IMAGE_TAG=1.6
 
     # build
     docker build -t chzbrgr71/tf-label-image:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
+
+    docker build -t chzbrgr71/tf-testing:$IMAGE_TAG -f ./label-image/Dockerfile.test ./label-image
 
     # run
     docker run -it --rm --name tf-label-image chzbrgr71/tf-label-image:$IMAGE_TAG
@@ -50,6 +53,7 @@
 ### Setup Kubernetes
 
 * Using [acs-engine](https://github.com/Azure/acs-engine) with kubernetes v1.11.3
+* Grafana/Prometheus add-on. https://github.com/Azure/acs-engine/tree/master/extensions/prometheus-grafana-k8s 
 
 
 ### Install Kubeflow
@@ -68,7 +72,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet2
+    APP_NAME=kf-ksonnet3
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -104,7 +108,7 @@
 
     Setup storage account for Azure Files
     ```bash
-    export RG_NAME=briar-ml-104-prom
+    export RG_NAME=briar-ml-105
     export STORAGE=briartfjobstorage
 
     az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
@@ -112,11 +116,10 @@
 
     Setup StorageClass, Roles, and PVC's
     ```bash
-    kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
+    # kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
 
     kubectl create -f ./k8s-setup/azure-file-sc.yaml
     kubectl create -f ./k8s-setup/azure-file-pvc.yaml
-
     kubectl create -f ./k8s-setup/azure-disk-pvc.yaml
     ```
 
@@ -124,9 +127,9 @@
     ```bash
     kubectl get pvc
 
-    NAME                STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-    azurefile           Bound     pvc-b95edfeb-c1bb-11e8-b9a1-000d3a1f8011   5Gi        RWX            kfazurefile    10s
-    azure-managed-disk  Bound     pvc-7bdb43d3-c561-11e8-8100-000d3a4f8d42   5Gi        RWO            managed-premium    7h
+    NAME                           STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS          AGE
+    azure-files                    Bound     pvc-701559d2-c5d6-11e8-8031-000d3a1fd235   5Gi        RWX            kubeflow-azurefiles   6s
+    azure-managed-disk             Pending                                                                        managed-standard      5s
     ```
 
 
@@ -134,13 +137,25 @@
 
 * Deploy TFJob and tensorboard
 
-    With Azure Files
-    ```
+    With Azure Files (runs too slow)
+    ```bash
     kubectl create -f ./kubeflow/train-model-tfjob-azurefiles.yaml
     ```
 
     With Azure Disk (cannot run at the same time)
-    ```
+    ```bash
     kubectl create -f ./kubeflow/train-model-tfjob-azuredisk.yaml
     kubectl create -f ./kubeflow/tensorboard-standalone.yaml
+
+    kubectl cp default/tensorboard-image-retraining-65478c9847-kpb4z:/model/retrained_graph.pb /Users/brianredmond/Downloads/retrained_graph.pb
+    kubectl cp default/tensorboard-image-retraining-65478c9847-kpb4z:/model/retrained_labels.txt /Users/brianredmond/Downloads/retrained_labels.txt
+
+    kubectl create -f ./kubeflow/model-testing.yaml
+    ```
+
+    Mixed
+    ```bash
+    kubectl create -f ./kubeflow/train-model-tfjob-mixed.yaml
+
+    kubectl delete -f ./kubeflow/train-model-tfjob-mixed.yaml
     ```

@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: tf-testing
+  name: tf-testing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tf-testing
+  template:
+    metadata:
+      labels:
+        app: tf-testing
+    spec:
+      volumes:
+        - name: tf-azure-disk
+          persistentVolumeClaim:
+            claimName: tf-azure-disk
+      containers:
+        - name: tf-testing
+          image: chzbrgr71/tf-testing:1.6
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /model
+              name: tf-azure-disk

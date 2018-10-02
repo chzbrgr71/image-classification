@@ -1,0 +1,49 @@
+{
+    "apiVersion": "vlabs",
+    "properties": {
+      "orchestratorProfile": {
+        "orchestratorType": "Kubernetes",
+        "orchestratorRelease": "1.11"
+      },
+      "masterProfile": {
+        "count": 1,
+        "dnsPrefix": "briar-ml-104-prom",
+        "vmSize": "Standard_D2_v2"
+      },
+      "agentPoolProfiles": [
+        {
+          "name": "gpuagentpool",
+          "count": 3,
+          "vmSize": "Standard_NC6",
+          "availabilityProfile": "AvailabilitySet",
+          "storageProfile": "ManagedDisks",
+          "extensions": [
+            { 
+              "name": "prometheus-grafana-k8s"
+            }
+          ]
+        }
+      ],
+      "linuxProfile": {
+        "adminUsername": "azureuser",
+        "ssh": {
+          "publicKeys": [
+            {
+                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1IPznosnb4MNFjsNP1mwzKb0xWdR+fNre2I162aymHDogCkHNtqofrcZyBIxhoPYWPLGmnvkHxk+9mcLP/MZegBgGwuSnsDBHqNH40D9l2nnTDUPy2XLGo5QhggTqJCXfjAli9ce5ifXLQFaxdhRVLzkaPilQ9SR04koBSRSrb5jWEBekf3UAZPmBg+RYZZLtAOakWN2AigZDJdSddbfaNA8T3jvybx6k10RrC280Y3wVX/NapedTs/LqzE2rXFKQpmbof3+67KYwflRSFUY9IG8oqs1YbBpR9MhTJb7bnyQs1cjt/Emjs/1zx1G9pJMkzqCPbPlIM2wyW77LNnoB"
+            }
+          ]
+        }
+      },
+      "extensionProfiles": [
+        { 
+          "name": "prometheus-grafana-k8s", 
+          "version": "v1",
+          "rootURL": "https://raw.githubusercontent.com/Azure/acs-engine/master/"
+        }
+      ],
+      "servicePrincipalProfile": {
+        "clientId": "59343209-9d9e-464d-8508-068a3d331fb9",
+        "secret": "d55a7984-3500-4f16-ace4-55414d2d6446"
+      }
+    }
+  }
