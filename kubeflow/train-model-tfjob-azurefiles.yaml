@@ -9,20 +9,20 @@ spec:
       template:
         spec:
           containers:
-            - image: chzbrgr71/image-retrain:1.2
+            - image: chzbrgr71/image-retrain:1.7-gpu
               name: tensorflow
               resources:
                 limits:
                   nvidia.com/gpu: 1
               volumeMounts:
-                - name: azurefile
+                - name: azure-files
                   subPath: tf-image-retraining
                   mountPath: /tmp/tensorflow
           restartPolicy: OnFailure
           volumes:
-            - name: azurefile
+            - name: azure-files
               persistentVolumeClaim:
-                claimName: azurefile
+                claimName: azure-files
 ---
 apiVersion: v1
 kind: Service
@@ -56,9 +56,9 @@ spec:
         app: tensorboard-image-retraining
     spec:
       volumes:
-        - name: azurefile
+        - name: azure-files
           persistentVolumeClaim:
-            claimName: azurefile
+            claimName: azure-files
       containers:
         - name: tensorflow
           image: tensorflow/tensorflow:1.10.0
@@ -71,7 +71,7 @@ spec:
           volumeMounts:
             - mountPath: /tmp/tensorflow
               subPath: tf-image-retraining
-              name: azurefile
+              name: azure-files
           ports:
             - containerPort: 6006
               protocol: TCP

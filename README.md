@@ -157,7 +157,7 @@
     kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt /Users/brianredmond/Downloads/retrained_labels.txt
     ```
 
-    Mixed (not working)
+    Mixed
     ```bash
     kubectl create -f ./kubeflow/train-model-tfjob-mixed.yaml
     kubectl delete -f ./kubeflow/train-model-tfjob-mixed.yaml
