@@ -54,9 +54,18 @@
 ### Setup Kubernetes
 
 * Using [acs-engine](https://github.com/Azure/acs-engine) with kubernetes v1.11.3
-* Grafana/Prometheus add-on. https://github.com/Azure/acs-engine/tree/master/extensions/prometheus-grafana-k8s 
 
+* Enable Helm
+
+    ```bash
+    kubectl create -f ./k8s-setup/tiller-rbac-config.yaml
+    
+    helm init --service-account tiller --upgrade
     ```
+
+* Grafana/Prometheus add-on (optional). https://github.com/Azure/acs-engine/tree/master/extensions/prometheus-grafana-k8s 
+
+    ```bash
     echo $(kubectl get secret dashboard-grafana -o jsonpath="{.data.grafana-admin-password}" | base64 --decode)
     ```
 
@@ -193,6 +202,11 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 ### Hyperparameter Sweep Demo
 
+This step requires Azure Files PVC to be available
+
+```bash
+helm install --name image-retrain-hyperparam ./hyperparameter/chart
+```
 
 
 ### Model Serving

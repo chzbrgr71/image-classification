@@ -16,5 +16,3 @@ subjects:
   - kind: ServiceAccount
     name: tiller
     namespace: kube-system
-
-#az aks install-connector --resource-group briar-aks-1006 --name briar-aks-1006 --connector-name virtual-kubelet --os-type Both
