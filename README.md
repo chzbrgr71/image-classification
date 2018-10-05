@@ -5,8 +5,8 @@
 
 * Training
     ```bash
-    export IMAGE_TAG=1.7
-    export IMAGE_TAG=1.7-gpu
+    export IMAGE_TAG=1.8
+    export IMAGE_TAG=1.8-pets-gpu
 
     # build
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
@@ -17,12 +17,12 @@
     # run
     docker run -d --name train -p 6006:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/image-retrain:$IMAGE_TAG
 
-    docker run -d --name train --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/model chzbrgr71/image-retrain:$IMAGE_TAG "--bottleneck_dir=/model/bottlenecks" "--model_dir=/model/inception" "--summaries_dir=/model/training_summaries/long" "--output_graph=/model/retrained_graph.pb" "--output_labels=/model/retrained_labels.txt" "--image_dir=images"
+    docker run -d --name train --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/image-retrain:$IMAGE_TAG "--how_many_training_steps=4000" "--learning_rate=0.01" "--bottleneck_dir=/tf-output/bottlenecks" "--model_dir=/tf-output/inception" "--summaries_dir=/tf-output/training_summaries/baseline" "--output_graph=/tf-output/retrained_graph.pb" "--output_labels=/tf-output/retrained_labels.txt" "--image_dir=images"
     ```
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.7
+    export IMAGE_TAG=1.8
 
     # build
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
@@ -38,7 +38,7 @@
 
 * Label Image with Trained Model
     ```bash
-    export IMAGE_TAG=1.71
+    export IMAGE_TAG=1.8
 
     # build
     docker build -t chzbrgr71/tf-testing:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
@@ -112,7 +112,7 @@
 
     Setup storage account for Azure Files
     ```bash
-    export RG_NAME=briar-ml-106
+    export RG_NAME=briar-ml-110
     export STORAGE=briartfjobstorage
 
     az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
@@ -151,8 +151,11 @@
     kubectl create -f ./kubeflow/train-model-tfjob-azuredisk.yaml
     kubectl create -f ./kubeflow/tensorboard-standalone.yaml
 
+    # cats/dogs
+    kubectl create -f ./kubeflow/tfjob2.yaml
+
     # to download model from pod
-    PODNAME=tensorboard-image-retraining-5fcdff966c-88zll
+    PODNAME=tensorboard-image-retraining-6fcf6df7c8-4qb9j
     kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb /Users/brianredmond/Downloads/retrained_graph.pb
     kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt /Users/brianredmond/Downloads/retrained_labels.txt
     ```

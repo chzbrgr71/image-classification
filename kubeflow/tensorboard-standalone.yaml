@@ -35,7 +35,7 @@ spec:
             claimName: azure-managed-disk
       containers:
         - name: tensorflow
-          image: chzbrgr71/tensorboard:1.7
+          image: chzbrgr71/tensorboard:1.8
           args:                
             - "--logdir"
             - "/tf-output/training_summaries"

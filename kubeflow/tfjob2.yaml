@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tfjob2-disk
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 8Gi
+---
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob
 metadata:
@@ -9,7 +21,7 @@ spec:
       template:
         spec:
           containers:
-            - image: chzbrgr71/image-retrain:1.8-gpu
+            - image: chzbrgr71/image-retrain:1.8-pets-gpu
               name: tensorflow
               args:                
                 - "--bottleneck_dir=/tf-output/bottlenecks"
@@ -22,10 +34,10 @@ spec:
                 limits:
                   nvidia.com/gpu: 1
               volumeMounts:
-                - name: azure-managed-disk
+                - name: tfjob2-disk
                   mountPath: /tf-output
           restartPolicy: OnFailure
           volumes:
-            - name: azure-managed-disk
+            - name: tfjob2-disk
               persistentVolumeClaim:
-                claimName: azure-managed-disk
+                claimName: tfjob2-disk
