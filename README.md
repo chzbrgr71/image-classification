@@ -6,7 +6,7 @@
 * Training
     ```bash
     export IMAGE_TAG=1.8
-    export IMAGE_TAG=1.8-pets-gpu
+    export IMAGE_TAG=1.8-gpu
 
     # build
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
@@ -106,62 +106,96 @@
 
 ### Setup Azure Storage
 
-* Setup PVC components to persist data in pods
+Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
 
-    https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
+Setup storage account for Azure Files
+```bash
+export RG_NAME=briar-ml-110
+export STORAGE=briartfjobstorage
 
-    Setup storage account for Azure Files
-    ```bash
-    export RG_NAME=briar-ml-110
-    export STORAGE=briartfjobstorage
+az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
+```
 
-    az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
-    ```
+Setup StorageClass, Roles, and PVC's
+```bash
+# kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
 
-    Setup StorageClass, Roles, and PVC's
-    ```bash
-    # kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
+kubectl create -f ./k8s-setup/azure-file-sc.yaml
+kubectl create -f ./k8s-setup/azure-file-pvc.yaml
+```
 
-    kubectl create -f ./k8s-setup/azure-file-sc.yaml
-    kubectl create -f ./k8s-setup/azure-file-pvc.yaml
-    kubectl create -f ./k8s-setup/azure-disk-pvc.yaml
-    ```
+Check status
+```bash
+kubectl get pvc
 
-    Check status
-    ```bash
-    kubectl get pvc
-
-    NAME                           STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS          AGE
-    azure-files                    Bound     pvc-701559d2-c5d6-11e8-8031-000d3a1fd235   5Gi        RWX            kubeflow-azurefiles   6s
-    azure-managed-disk             Pending                                                                        managed-standard      5s
-    ```
+NAME          STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS          AGE
+azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RWX            kubeflow-azurefiles   4h
+```
 
 
 ### Host Training on Kubeflow (TFJob)
 
 * Deploy TFJob and tensorboard
 
-    With Azure Files (runs too slow)
-    ```bash
-    kubectl create -f ./kubeflow/train-model-tfjob-azurefiles.yaml
-    ```
+    1. Run TFJob (either for ed sheeran or pets)
+        ```bash
+        kubectl create -f ./kubeflow/tfjob1-retrain-edsheeran.yaml
 
-    With Azure Disk (cannot run at the same time)
-    ```bash
-    kubectl create -f ./kubeflow/train-model-tfjob-azuredisk.yaml
-    kubectl create -f ./kubeflow/tensorboard-standalone.yaml
+        # after completed, then run:
+        kubectl delete tfjob tfjob-retrain-edsheeran
+        ```
 
-    # cats/dogs
-    kubectl create -f ./kubeflow/tfjob2.yaml
+        OR 
 
-    # to download model from pod
-    PODNAME=tensorboard-image-retraining-6fcf6df7c8-4qb9j
-    kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb /Users/brianredmond/Downloads/retrained_graph.pb
-    kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt /Users/brianredmond/Downloads/retrained_labels.txt
-    ```
+        ```bash
+        kubectl create -f ./kubeflow/tfjob2-retrain-pets.yaml
 
-    Mixed
-    ```bash
-    kubectl create -f ./kubeflow/train-model-tfjob-mixed.yaml
-    kubectl delete -f ./kubeflow/train-model-tfjob-mixed.yaml
-    ```
+        # after completed, then run:
+        kubectl delete tfjob tfjob-retrain-pets
+        ```
+
+    2. Run Tensorboard (must wait for above to complete)
+        ```bash
+        kubectl create -f ./kubeflow/tfjob1-tensorboard.yaml
+        ```
+
+        OR
+
+        ```bash
+        kubectl create -f ./kubeflow/tfjob2-tensorboard.yaml
+        ```
+
+    3. Download model (while TB pod is running)
+        ```bash        
+        # to download model from pod
+        PODNAME=<pod name>
+        kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
+        kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
+        ```
+
+    4. Clean up
+        ```bash
+        kubectl delete -f ./kubeflow/tfjob1-tensorboard.yaml
+        kubectl delete pvc disk-retrain-edsheeran
+        ```
+
+    5. Test locally
+        ```bash
+        docker run -it --rm --name tf \
+          --publish 6006:6006 \
+          --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71:/brianredmond \
+          --workdir /brianredmond  \
+          tensorflow/tensorflow:1.9.0 bash
+
+        python label-image2.py edsheeran.jpg
+        python label-image2.py bradpitt.jpg
+        ```
+
+### Hyperparameter Sweep Demo
+
+
+
+### Model Serving
+
+1. Python Flask App
+2. Tensorflow Serving

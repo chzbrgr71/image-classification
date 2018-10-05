@@ -1,2 +1,4 @@
 retrained_graph.pb
+retrained_graph_pets.pb
 retrained_labels.txt
+retrained_labels_pets.txt

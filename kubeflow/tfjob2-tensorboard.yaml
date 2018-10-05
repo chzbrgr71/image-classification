@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tfjob2-tensorboard
+  labels:
+    name: tfjob2-tensorboard
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 6006
+  selector:
+    app: tfjob2-tensorboard
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: tfjob2-tensorboard
+  name: tfjob2-tensorboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tfjob2-tensorboard
+  template:
+    metadata:
+      labels:
+        app: tfjob2-tensorboard
+    spec:
+      volumes:
+        - name: tfjob2-disk
+          persistentVolumeClaim:
+            claimName: tfjob2-disk
+      containers:
+        - name: tensorflow
+          image: chzbrgr71/tensorboard:1.8
+          args:                
+            - "--logdir"
+            - "/tf-output/training_summaries"
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /tf-output
+              name: tfjob2-disk
+          ports:
+            - containerPort: 6006
+              protocol: TCP

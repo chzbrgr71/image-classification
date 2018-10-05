@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: tfjob2-disk
+  name: disk-retrain-edsheeran
 spec:
   accessModes:
   - ReadWriteOnce
@@ -13,7 +13,7 @@ spec:
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob
 metadata:
-  name: tf-image-retraining-disk
+  name: tfjob-retrain-edsheeran
 spec:
   tfReplicaSpecs:
     MASTER:
@@ -21,7 +21,7 @@ spec:
       template:
         spec:
           containers:
-            - image: chzbrgr71/image-retrain:1.8-pets-gpu
+            - image: chzbrgr71/image-retrain:1.8-gpu
               name: tensorflow
               args:                
                 - "--bottleneck_dir=/tf-output/bottlenecks"
@@ -34,10 +34,10 @@ spec:
                 limits:
                   nvidia.com/gpu: 1
               volumeMounts:
-                - name: tfjob2-disk
+                - name: disk-retrain-edsheeran
                   mountPath: /tf-output
           restartPolicy: OnFailure
           volumes:
-            - name: tfjob2-disk
+            - name: disk-retrain-edsheeran
               persistentVolumeClaim:
-                claimName: tfjob2-disk
+                claimName: disk-retrain-edsheeran
