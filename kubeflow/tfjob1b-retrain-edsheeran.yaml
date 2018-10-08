@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: disk-retrain-edsheeran
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 8Gi
+---
+apiVersion: kubeflow.org/v1alpha2
+kind: TFJob
+metadata:
+  name: tfjob1b-retrain-edsheeran
+spec:
+  tfReplicaSpecs:
+    MASTER:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - image: chzbrgr71/image-retrain:1.8-gpu
+              name: tensorflow
+              args:                
+                - "--bottleneck_dir=/tf-output/bottlenecks"
+                - "--model_dir=/tf-output/inception"
+                - "--summaries_dir=/tf-logs/training_summaries/baseline"
+                - "--output_graph=/tf-output/retrained_graph.pb"
+                - "--output_labels=/tf-output/retrained_labels.txt"
+                - "--image_dir=images"        
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - name: disk-retrain-edsheeran
+                  mountPath: /tf-output
+                - name: azure-files
+                  mountPath: /tf-logs
+                  subPath: tfjob1b-edsheeran
+          restartPolicy: OnFailure
+          volumes:
+            - name: disk-retrain-edsheeran
+              persistentVolumeClaim:
+                claimName: disk-retrain-edsheeran
+            - name: azure-files
+              persistentVolumeClaim:
+                claimName: azure-files
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tfjob1b-tensorboard
+  labels:
+    name: tfjob1b-tensorboard
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 6006
+  selector:
+    app: tfjob1b-tensorboard
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: tfjob1b-tensorboard
+  name: tfjob1b-tensorboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tfjob1b-tensorboard
+  template:
+    metadata:
+      labels:
+        app: tfjob1b-tensorboard
+    spec:
+      volumes:
+        - name: azure-files
+          persistentVolumeClaim:
+            claimName: azure-files
+      containers:
+        - name: tensorflow
+          image: chzbrgr71/tensorboard:1.8
+          args:                
+            - "--logdir"
+            - "/tf-logs/training_summaries"
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: azure-files
+              mountPath: /tf-logs
+              subPath: tfjob1b-edsheeran
+          ports:
+            - containerPort: 6006
+              protocol: TCP              

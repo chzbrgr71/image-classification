@@ -69,6 +69,12 @@
     echo $(kubectl get secret dashboard-grafana -o jsonpath="{.data.grafana-admin-password}" | base64 --decode)
     ```
 
+* Scale when needed
+
+    ```bash
+    az vmss scale -n k8s-gpuagentpool-18712514-vmss -g briar-ml-110 --new-capacity 1 --no-wait
+    ```
+
 ### Install Kubeflow
 
 * First, install ksonnet version [0.9.2](https://ksonnet.io/#get-started).
@@ -146,7 +152,18 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 * Deploy TFJob and tensorboard
 
-    1. Run TFJob (either for ed sheeran or pets)
+    1. Run TFJob and Tensorboard together (split storage with Azure Disk/Files)
+        ```bash
+        kubectl create -f ./kubeflow/tfjob1b-retrain-edsheeran.yaml
+        
+        # after completed, then run:
+        kubectl delete tfjob tfjob1b-retrain-edsheeran
+
+        # need step to run a pod and download model file
+
+        ```
+
+    2. Run TFJob (either for ed sheeran or pets)
         ```bash
         kubectl create -f ./kubeflow/tfjob1-retrain-edsheeran.yaml
 
@@ -163,7 +180,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
         kubectl delete tfjob tfjob-retrain-pets
         ```
 
-    2. Run Tensorboard (must wait for above to complete)
+    3. Run Tensorboard (must wait for above to complete)
         ```bash
         kubectl create -f ./kubeflow/tfjob1-tensorboard.yaml
         ```
@@ -174,7 +191,12 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
         kubectl create -f ./kubeflow/tfjob2-tensorboard.yaml
         ```
 
-    3. Download model (while TB pod is running)
+        ```bash
+        # exec into pod
+        tensorboard --logdir /tf-output/training_summaries
+        ```
+
+    4. Download model (while TB pod is running)
         ```bash        
         # to download model from pod
         PODNAME=<pod name>
@@ -182,13 +204,13 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
         kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
         ```
 
-    4. Clean up
+    5. Clean up
         ```bash
         kubectl delete -f ./kubeflow/tfjob1-tensorboard.yaml
         kubectl delete pvc disk-retrain-edsheeran
         ```
 
-    5. Test locally
+    6. Test locally
         ```bash
         docker run -it --rm --name tf \
           --publish 6006:6006 \
@@ -213,3 +235,11 @@ helm install --name image-retrain-hyperparam ./hyperparameter/chart
 
 1. Python Flask App
 2. Tensorflow Serving
+
+### Brigafe
+
+This section shows how to implement Brigade for CI/CD jobs related to our image classification model. 
+
+* Install Brigade https://brigade.sh 
+
+* 
