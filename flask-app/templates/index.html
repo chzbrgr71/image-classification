@@ -1,0 +1,311 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    <title>Ed Sheeran Or Not Ed Sheeran</title>
+    <meta name="theme-color" content="##red">
+    <style>
+        /* COMMON */
+          @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 900;
+            src: url('roboto-black.ttf') format('truetype');
+          }
+          body, button {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 900;
+          }
+          body { background: #202020 }
+          * { user-select: none }
+
+
+          /* CAMERA */
+          #camera {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+          }
+
+
+          /* OVERLAY */
+          #overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+          }
+
+          #overlay .dialog {
+            position: absolute;
+            left: 30px;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 30px;
+            background: #21a8c6;
+            color: #fff;
+            border: solid 2px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+          }
+
+          #overlay .result {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            padding: 15px 0;
+            color: #ff0;
+            -webkit-text-stroke: 1.7px #000;
+            filter: drop-shadow(-2px 1px 0 #fff) drop-shadow(2px 1px 0 #fff);
+            text-align: center;
+            font-size: 40px;
+            display: none;
+          }
+          #overlay .result::after {
+            content: '';
+            box-sizing: border-box;
+            position: absolute;
+            top: calc(100% - 20px);
+            left: 50%;
+            margin-left: -50px;
+            width: 100px;
+            height: 100px;
+            background: url('static/edsheeran.png') no-repeat center;
+            background-size: 80%;
+            border-radius: 50%;
+            z-index: -1;
+          }
+          #overlay .result.edsheeran,
+          #overlay .result.edsheeran::after {
+            background-color: #0f0;
+          }
+          #overlay .result.not-edsheeran,
+          #overlay .result.not-edsheeran::after {
+            background-color: #f00;
+          }
+          #overlay .result.not-edsheeran::before {
+            content: '';
+            position: absolute;
+            top: calc(100% - 20px);
+            left: 50%;
+            margin-left: -50px;
+            width: 100px;
+            height: 100px;
+            background: url('static/cross.png') no-repeat center;
+            background-size: 70%;
+          }
+        </style>
+  </head>
+  <body>
+    <!-- OVERLAY -->
+    <div id="overlay" >
+      <div class="result"></div>
+      <div class="dialog">Allow access to Camera to continue...</div>
+    </div>
+
+    <!-- CAMERA UI -->
+    <video id="camera" autoplay"></video>
+    <script type="text/javascript">
+
+      //https://josemmo.github.io/not-edsheeran/app.js
+
+      (function() {
+
+        var IMAGE_SIZE = 224;
+        var PREDICT_INTERVAL = 1000;
+        var overlayDialog = document.querySelector('#overlay .dialog');
+        var camera = document.getElementById('camera');
+        //var notification = new Audio('notification.ogg');
+        //notification.preload = 'auto';
+      
+        var lastCheck = null;
+      
+        /**
+         * Update UI
+         * @param {Boolean} isedsheeran Is edsheeran
+         */
+        function updateUI(isedsheeran) {
+          if (lastCheck == isedsheeran) return;
+      
+          // Update result overlay
+          var result = document.querySelector('#overlay .result');
+          if (isedsheeran) {
+            result.classList.remove('not-edsheeran');
+            result.classList.add('edsheeran');
+            result.innerHTML = "It's Ed Sheeran!";
+      
+            // Play sound
+            //notification.play();
+          } else {
+            result.classList.remove('edsheeran');
+            result.classList.add('not-edsheeran');
+            result.innerHTML = 'NOT Ed Sheeran!';
+          }
+          result.style.display = 'block';
+      
+          // Update last state
+          lastCheck = isedsheeran;
+        }
+      
+      
+        /**
+         * Get camera image
+         * @return {HTMLCanvasElement} Canvas with image
+         */
+        function getCameraImage() {
+          var c = document.createElement('canvas');
+          c.width = IMAGE_SIZE;
+          c.height = IMAGE_SIZE;
+          c.getContext('2d').drawImage(camera, 0, 0, c.width, c.height);
+          return c;
+        }
+      
+      
+        /**
+         * Connect to camera
+         * @async
+         * @return {Promise} Callback
+         */
+        function connectToCamera() {
+          return new Promise(function(resolve, reject) {
+            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+
+              navigator.mediaDevices.getUserMedia({
+                
+                video: {
+                  facingMode: 'environment' // For phones, prefer main camera
+                }
+              }).then(function(stream) {
+                // Start rendering camera
+                
+                try {
+                  camera.srcObject = stream;
+                } catch (e) {
+                  var streamURL = window.URL.createObjectURL(stream);
+                  camera.src = streamURL;
+                }
+                //Use this API if `autoplay` is not used.
+                camera.play();
+                // Resolve promise
+                resolve();
+              }).catch(reject);
+            }
+
+          });
+        }
+      
+      
+        /**
+         * Load model
+         * @async
+         * @return {Promise} Callback
+         */
+        function loadModel() {
+          return new Promise(function(resolve, reject) {
+            /*tf.loadModel(MODEL_PATH).then(function(m) {
+              model = m;
+              fetch(CLASSES_PATH).then(function(res) {
+                res.json().then(function(json) {
+                  modelClasses = json;
+                  resolve();
+                });
+              });
+            }).catch(reject);*/
+
+            resolve();
+          });
+        }
+      
+      
+        /**
+         * Start predicting
+         */
+        function startPredicting() {
+          predict().then(function(isedsheeran) {
+            // Update UI
+            if (isedsheeran) console.log('Ed Sheeran Found!');
+            updateUI(isedsheeran);
+      
+            // Schedule next prediction
+            setTimeout(function() {
+              startPredicting();
+            }, PREDICT_INTERVAL);
+          });
+        }
+      
+      
+        /**
+         * Predict
+         * @async
+         * @return {Promise<Boolean>} Is edsheeran
+         */
+        function predict() {
+          return new Promise(function(resolve, reject) {
+            var image_canvas = getCameraImage()
+            //Convert the camera image to blob
+            image_canvas.toBlob(function(blob){
+
+              var form_data = new FormData();
+              form_data.append("image.png", blob)
+
+              fetch("http://localhost:5000/detect_image", {
+                method: "POST",
+                body: form_data
+              })
+              .then(function(response) {
+                return response.json();
+              })
+              .then(data => {
+                //Print confidence data
+                console.log(data);
+
+                var isedsheeran = false;
+                if (data.confidence > 0.5) {
+                  this.isedsheeran = true;
+                } else {
+                  this.isedsheeran = false;
+                }
+                console.log("Is Ed Sheeran?: " + this.isedsheeran)
+
+                resolve(isedsheeran);
+
+              })
+              .catch(error => {
+                console.error(error)}
+              )
+              .finally(_ => {
+
+              });
+            }, "image/png", 0.75);
+          });
+        }
+
+        /* INITIALIZE */
+        connectToCamera().then(function() {
+          overlayDialog.innerHTML = 'Loading remote model...';
+          loadModel().then(function() {
+            overlayDialog.style.display = 'none';
+            startPredicting();
+          });
+        }).catch(function() {
+          overlayDialog.innerHTML = 'This app needs access to the camera ' + 'to complete inference...';
+        });        
+      
+    
+      
+      })();
+
+
+    </script>
+  </body>
+
+</html>
