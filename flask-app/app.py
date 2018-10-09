@@ -9,7 +9,6 @@ import os, glob
 import codecs, json 
 from werkzeug.utils import secure_filename
 
-
 app = Flask(__name__)
 
 ALLOWED_EXTENSIONS = ('png', 'jpg', 'jpeg')
@@ -21,7 +20,14 @@ def index():
 @app.route("/detect_image", methods=["POST"])
 def detect_image():
 
-    print("Detecting image...")
+    print(
+    """
+        ===/////
+        ===/////
+        Detecting images...
+        ===/////
+        ===/////
+    """)
 
     #Filter files with valid image extension, return None by default
     request_image = ([ request.files[f] for f in request.files if f.lower().endswith(ALLOWED_EXTENSIONS) ] or [None])[0]
@@ -34,10 +40,15 @@ def detect_image():
     filename = str(Path.cwd() / secure_filename(request_image.filename))
     request_image.save(filename)
 
-    #Final tuple result to jsonify
-    result = ()
+    #Final dict result to jsonify
+    result = {
+        "image": "",
+        "is_ed_sheehan": None,
+        "confidence" : 0.0
+    }
 
     image_path = filename
+    result["image"] = image_path
 
     # Read in the image_data
     image_data = tf.gfile.FastGFile(image_path, 'rb').read()
@@ -67,12 +78,14 @@ def detect_image():
 
         if score > 0.5:
             print('I am confident this is Ed Sheeran (%s)' % (score))
-            result = (str(request_image.filename), 1, float(score))
+            result["is_ed_sheehan"] = 1
+            result["confidence"] = float(score)
 
 
         else:
             print('This is not Ed Sheeran (%s)' % (score))
-            result = (str(request_image.filename), 0, float(score))
+            result["is_ed_sheehan"] = 0
+            result["confidence"] = float(score)
    
     encoded_json = json.dumps(result)
     print(encoded_json)
