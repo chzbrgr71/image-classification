@@ -75,6 +75,14 @@
     az vmss scale -n k8s-gpuagentpool-18712514-vmss -g briar-ml-110 --new-capacity 1 --no-wait
     ```
 
+* AKS GPU Fix
+
+    https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#troubleshoot
+
+    ```bash
+    kubectl apply -f ./k8s-setup/nvidia-device-plugin-ds.yaml
+    ```
+
 ### Install Kubeflow
 
 * First, install ksonnet version [0.9.2](https://ksonnet.io/#get-started).
@@ -125,7 +133,7 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 Setup storage account for Azure Files
 ```bash
-export RG_NAME=briar-ml-110
+export RG_NAME=MC_aks-ml-01_aks-ml-01_westeurope
 export STORAGE=briartfjobstorage
 
 az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
@@ -234,6 +242,9 @@ helm install --name image-retrain-hyperparam ./hyperparameter/chart
 ### Model Serving
 
 1. Python Flask App
+
+    docker build -t chzbrgr71/edsheeran-flask-app:1.0 .
+
 2. Tensorflow Serving
 
 ### Brigafe
@@ -241,5 +252,16 @@ helm install --name image-retrain-hyperparam ./hyperparameter/chart
 This section shows how to implement Brigade for CI/CD jobs related to our image classification model. 
 
 * Install Brigade https://brigade.sh 
+    ```bash
+    helm repo add brigade https://azure.github.io/brigade
 
-* 
+    helm install -n brigade brigade/brigade --set vacuum.enabled=false
+    ```
+
+* Create project for training
+
+    Using a separate GH repo for training and serving.
+
+    ```bash
+    helm install --name brig-proj-training brigade/brigade-project -f brig-proj-training.yaml
+    ```

@@ -1,6 +1,9 @@
 # TF model
 **/tf-output
 
+brig-proj-training.yaml
+brig-proj-serving.yaml
+
 .DS_Store
 **/.DS_Store
 .vscode
