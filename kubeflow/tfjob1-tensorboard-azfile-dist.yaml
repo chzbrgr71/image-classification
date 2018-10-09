@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tfjob1-tensorboard
+  labels:
+    name: tfjob1-tensorboard
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 6006
+  selector:
+    app: tfjob1-tensorboard
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: tfjob1-tensorboard
+  name: tfjob1-tensorboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tfjob1-tensorboard
+  template:
+    metadata:
+      labels:
+        app: tfjob1-tensorboard
+    spec:
+      volumes:
+        - name: disk-retrain-edsheeran
+          persistentVolumeClaim:
+            claimName: azurefile
+      containers:
+        - name: tensorflow
+          image: ritazh/tensorboard:1.9
+          args:                
+            - "--logdir"
+            - "/tmp/edsheeran-dist/logs"
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /tmp
+              name: disk-retrain-edsheeran
+          ports:
+            - containerPort: 6006
+              protocol: TCP
