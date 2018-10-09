@@ -1,0 +1,202 @@
+
+<html>
+    <script type="text/javascript">
+      //https://josemmo.github.io/not-hotdog/app.js
+
+      var lastCheck = false;
+      var isHotdog = false;
+
+      var overlayDialog = document.querySelector('#overlay .dialog');
+      var camera = document.getElementById('camera');
+
+      function onCameraClick() {
+          console.debug("camera clicked");
+      }
+      function getCameraImage() {
+        var c = document.createElement('canvas');
+        c.width = IMAGE_SIZE;
+        c.height = IMAGE_SIZE;
+        c.getContext('2d').drawImage(camera, 0, 0, c.width, c.height);
+        return c;
+      }
+
+
+      /**
+      * Update UI
+      * @param {Boolean} isHotdog Is hotdog
+      */
+      function updateUI(isHotdog) {
+        if (lastCheck == isHotdog) return;
+
+        // Update result overlay
+        var result = document.querySelector('#overlay .result');
+        if (isHotdog) {
+          result.classList.remove('not-hotdog');
+          result.classList.add('hotdog');
+          result.innerHTML = 'Hotdog!';
+
+          // Play sound
+          notification.play();
+        } else {
+          result.classList.remove('hotdog');
+          result.classList.add('not-hotdog');
+          result.innerHTML = 'Not Hotdog!';
+        }
+        result.style.display = 'block';
+
+        // Update last state
+        lastCheck = isHotdog;
+      }
+
+        /**
+      * Connect to camera
+      * @async
+      * @return {Promise} Callback
+      */
+      function connectToCamera() {
+        return new Promise(function(resolve, reject) {
+          navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'environment' // For phones, prefer main camera
+            }
+          }).then(function(stream) {
+            // Start rendering camera
+            var streamURL = window.URL.createObjectURL(stream);
+            try {
+              camera.srcObject = stream;
+            } catch (e) {
+              camera.src = streamURL;
+            }
+
+            // Resolve promise
+            resolve();
+          }).catch(reject);
+        });
+      }
+
+      /* INITIALIZE */
+      connectToCamera().then(function() {
+        overlayDialog.innerHTML = 'Connecting to Tensorflow Model...';
+        loadModel().then(function() {
+          overlayDialog.style.display = 'none';
+          //startPredicting();
+        });
+      }).catch(function() {
+        //overlayDialog.innerHTML = 'This app needs access to the camera ' + 'to complete inference...';
+      });
+
+
+    </script>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    <title>Ed Sheeran Or Not Ed Sheeran</title>
+    <meta name="theme-color" content="##red">
+  </head>
+  <body>
+    <!-- OVERLAY -->
+    <div id="overlay" onclick="onCameraClick()">
+      <div class="result"></div>
+      <div class="dialog">Allow access to Camera to continue...</div>
+    </div>
+
+    <!-- CAMERA UI -->
+    <video id="camera" autoplay></video>
+
+  </body>
+  <style>
+      /* COMMON */
+  body, button {
+    font-family: 'Helvetica-Neueu-Light', sans-serif;
+    font-weight: 900;
+  }
+  body { background: #202020 }
+  * { user-select: none }
+    
+    
+  /* CAMERA */
+    #camera {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    
+    
+    /* OVERLAY */
+    #overlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+    
+    #overlay .dialog {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 30px;
+      background: violet;
+      color: #fff;
+      border: solid 2px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 18px;
+    }
+    
+    #overlay .result {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      padding: 15px 0;
+      color: #ff0;
+      -webkit-text-stroke: 1.7px #000;
+      filter: drop-shadow(-2px 1px 0 #fff) drop-shadow(2px 1px 0 #fff);
+      text-align: center;
+      font-size: 40px;
+      display: none;
+    }
+    #overlay .result::after {
+      content: '';
+      box-sizing: border-box;
+      position: absolute;
+      top: calc(100% - 20px);
+      left: 50%;
+      margin-left: -50px;
+      width: 100px;
+      height: 100px;
+      background: url('images/hotdog.png') no-repeat center;
+      background-size: 80%;
+      border-radius: 50%;
+      z-index: -1;
+    }
+    #overlay .result.hotdog,
+    #overlay .result.hotdog::after {
+      background-color: #0f0;
+    }
+    #overlay .result.not-hotdog,
+    #overlay .result.not-hotdog::after {
+      background-color: #f00;
+    }
+    #overlay .result.not-hotdog::before {
+      content: '';
+      position: absolute;
+      top: calc(100% - 20px);
+      left: 50%;
+      margin-left: -50px;
+      width: 100px;
+      height: 100px;
+      background: url('images/cross.png') no-repeat center;
+      background-size: 70%;
+    }
+  </style>
+</html>
