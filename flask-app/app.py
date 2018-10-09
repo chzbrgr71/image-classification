@@ -28,12 +28,13 @@ def detect_image():
         ===/////
         ===/////
     """)
-
+#background: url({{ url_for('static', filename="edsheeran.png")}}) no-repeat center;
     #Filter files with valid image extension, return None by default
     request_image = ([ request.files[f] for f in request.files if f.lower().endswith(ALLOWED_EXTENSIONS) ] or [None])[0]
     
-    #If we get None from the file extension filter return 400
+    #If we get None from the file exten sion filter return 400
     if request_image == None:
+        print("Invalid image provided! Returning Bad Request.")
         return Response("Invalid image", status=400)
 
     #Save file to current path
