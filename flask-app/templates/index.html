@@ -124,9 +124,7 @@
         var PREDICT_INTERVAL = 1000;
         var overlayDialog = document.querySelector('#overlay .dialog');
         var camera = document.getElementById('camera');
-        //var notification = new Audio('notification.ogg');
-        //notification.preload = 'auto';
-      
+        
         var lastCheck = null;
       
         /**
@@ -135,20 +133,21 @@
          */
         function updateUI(isedsheeran) {
           if (lastCheck == isedsheeran) return;
-      
+
           // Update result overlay
           var result = document.querySelector('#overlay .result');
           if (isedsheeran) {
+            
             result.classList.remove('not-edsheeran');
             result.classList.add('edsheeran');
-            result.innerHTML = "It's Ed Sheeran!";
-      
-            // Play sound
-            //notification.play();
+            result.innerHTML = "It's Totally Ed Sheeran!";
+
+            console.log("Valid Edsheeran: \n" + result.classList);
           } else {
             result.classList.remove('edsheeran');
             result.classList.add('not-edsheeran');
             result.innerHTML = 'NOT Ed Sheeran!';
+            console.log("NOT Edsheeran: \n" + result.classList);
           }
           result.style.display = 'block';
       
@@ -211,16 +210,7 @@
          */
         function loadModel() {
           return new Promise(function(resolve, reject) {
-            /*tf.loadModel(MODEL_PATH).then(function(m) {
-              model = m;
-              fetch(CLASSES_PATH).then(function(res) {
-                res.json().then(function(json) {
-                  modelClasses = json;
-                  resolve();
-                });
-              });
-            }).catch(reject);*/
-
+            //Ping endpoint to validate model prewarmed
             resolve();
           });
         }
@@ -231,8 +221,9 @@
          */
         function startPredicting() {
           predict().then(function(isedsheeran) {
+            if(isedsheeran) console.log("Ed Sheeran Found!");
+
             // Update UI
-            if (isedsheeran) console.log('Ed Sheeran Found!');
             updateUI(isedsheeran);
       
             // Schedule next prediction
@@ -269,15 +260,13 @@
                 console.log(data);
 
                 var isedsheeran = false;
-                if (data.confidence > 0.5) {
-                  this.isedsheeran = true;
+                if (data.confidence >= 0.5) {
+                  isedsheeran = true;
                 } else {
-                  this.isedsheeran = false;
+                  isedsheeran = false;
                 }
-                console.log("Is Ed Sheeran?: " + this.isedsheeran)
 
                 resolve(isedsheeran);
-
               })
               .catch(error => {
                 console.error(error)}
@@ -285,7 +274,7 @@
               .finally(_ => {
 
               });
-            }, "image/png", 0.75);
+            }, "image/png", 0.75); //Render to PNG and downsample
           });
         }
 
@@ -298,13 +287,8 @@
           });
         }).catch(function() {
           overlayDialog.innerHTML = 'This app needs access to the camera ' + 'to complete inference...';
-        });        
-      
-    
-      
+        });
       })();
-
-
     </script>
   </body>
 
