@@ -75,6 +75,14 @@
     az vmss scale -n k8s-gpuagentpool-18712514-vmss -g briar-ml-110 --new-capacity 1 --no-wait
     ```
 
+* AKS GPU Fix
+
+    https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#troubleshoot
+
+    ```bash
+    kubectl apply -f ./k8s-setup/nvidia-device-plugin-ds.yaml
+    ```
+
 ### Install Kubeflow
 
 * First, install ksonnet version [0.9.2](https://ksonnet.io/#get-started).
@@ -91,7 +99,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet4
+    APP_NAME=kf-ksonnet5
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -125,8 +133,8 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 Setup storage account for Azure Files
 ```bash
-export RG_NAME=briar-ml-110
-export STORAGE=briartfjobstorage
+export RG_NAME=briar-kubeflow-02
+export STORAGE=briartfjobstorage02
 
 az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
 ```
@@ -150,9 +158,9 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 ### Host Training on Kubeflow (TFJob)
 
-* Deploy TFJob and tensorboard
+* Deploy TFJob and tensorboard together
 
-    1. Run TFJob and Tensorboard together (split storage with Azure Disk/Files)
+    Run TFJob and Tensorboard together (split storage with Azure Disk/Files)
         ```bash
         kubectl create -f ./kubeflow/tfjob1b-retrain-edsheeran.yaml
         
@@ -160,10 +168,11 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
         kubectl delete tfjob tfjob1b-retrain-edsheeran
 
         # need step to run a pod and download model file
-
         ```
 
-    2. Run TFJob (either for ed sheeran or pets)
+* Run seperately with Azure Disk only
+
+    1. Run TFJob (either for ed sheeran or pets) 
         ```bash
         kubectl create -f ./kubeflow/tfjob1-retrain-edsheeran.yaml
 
@@ -180,7 +189,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
         kubectl delete tfjob tfjob-retrain-pets
         ```
 
-    3. Run Tensorboard (must wait for above to complete)
+    2. Run Tensorboard (must wait for above to complete)
         ```bash
         kubectl create -f ./kubeflow/tfjob1-tensorboard.yaml
         ```
@@ -196,31 +205,31 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
         tensorboard --logdir /tf-output/training_summaries
         ```
 
-    4. Download model (while TB pod is running)
-        ```bash        
-        # to download model from pod
-        PODNAME=<pod name>
-        kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
-        kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
-        ```
+* Download model (while TB pod is running)
+    ```bash        
+    # to download model from pod
+    PODNAME=<pod name>
+    kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
+    kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
+    ```
 
-    5. Clean up
-        ```bash
-        kubectl delete -f ./kubeflow/tfjob1-tensorboard.yaml
-        kubectl delete pvc disk-retrain-edsheeran
-        ```
+* Clean up
+    ```bash
+    kubectl delete -f ./kubeflow/tfjob1-tensorboard.yaml
+    kubectl delete pvc disk-retrain-edsheeran
+    ```
 
-    6. Test locally
-        ```bash
-        docker run -it --rm --name tf \
-          --publish 6006:6006 \
-          --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71:/brianredmond \
-          --workdir /brianredmond  \
-          tensorflow/tensorflow:1.9.0 bash
+* Test locally
+    ```bash
+    docker run -it --rm --name tf \
+        --publish 6006:6006 \
+        --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71:/brianredmond \
+        --workdir /brianredmond  \
+        tensorflow/tensorflow:1.9.0 bash
 
-        python label-image2.py edsheeran.jpg
-        python label-image2.py bradpitt.jpg
-        ```
+    python label-image2.py edsheeran.jpg
+    python label-image2.py bradpitt.jpg
+    ```
 
 ### Hyperparameter Sweep Demo
 
@@ -230,16 +239,60 @@ This step requires Azure Files PVC to be available
 helm install --name image-retrain-hyperparam ./hyperparameter/chart
 ```
 
+### Azure Container Registry Tasks Demo
+
+This demo is in a separate repo. https://github.com/chzbrgr71/image-training 
+
+```bash
+ACR_NAME=briaracr    
+GIT_PAT=
+SLACK_WEBHOOK=
+
+az acr task create \
+    --registry $ACR_NAME \
+    --name tf-image-training \
+    --context https://github.com/chzbrgr71/image-training.git \
+    --branch master \
+    --file acr-task.yaml \
+    --git-access-token $GIT_PAT \
+    --set-secret SLACK_WEBHOOK=$SLACK_WEBHOOK
+```
 
 ### Model Serving
 
 1. Python Flask App
+
+    docker build -t chzbrgr71/edsheeran-flask-app:1.0 .
+
 2. Tensorflow Serving
 
-### Brigafe
+
+### Brigade
 
 This section shows how to implement Brigade for CI/CD jobs related to our image classification model. 
 
 * Install Brigade https://brigade.sh 
+    ```bash
+    helm repo add brigade https://azure.github.io/brigade
 
-* 
+    helm install -n brigade brigade/brigade --set vacuum.enabled=false
+
+    kubectl create clusterrolebinding serviceaccounts-admin --clusterrole=cluster-admin --group=system:serviceaccounts
+    ```
+
+* Create project for training
+
+    Using a separate GH repo for training and serving.
+
+    ```bash
+    helm install --name brig-proj-training brigade/brigade-project -f brig-proj-training.yaml
+    ```
+
+* Get webhook
+
+    ```bash
+    export GH_WEBHOOK=http://$(kubectl get svc brigade-brigade-github-gw -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):7744/events/github
+    echo $GH_WEBHOOK
+    echo $GH_WEBHOOK | pbcopy
+    ```
+
