@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: tensorboard-image-retraining
+  name: tensorboard
   labels:
-    name: tensorboard-image-retraining
+    name: tensorboard
 spec:
   type: LoadBalancer
   ports:
@@ -11,38 +11,36 @@ spec:
     port: 80
     targetPort: 6006
   selector:
-    app: tensorboard-image-retraining
+    app: tensorboard
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: tensorboard-image-retraining
-  name: tensorboard-image-retraining
+    app: tensorboard
+  name: tensorboard
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tensorboard-image-retraining
+      app: tensorboard
   template:
     metadata:
       labels:
-        app: tensorboard-image-retraining
+        app: tensorboard
     spec:
       volumes:
-        - name: azure-managed-disk
+        - name: azure-files
           persistentVolumeClaim:
-            claimName: azure-managed-disk
+            claimName: azure-files
       containers:
         - name: tensorflow
-          image: chzbrgr71/tensorboard:1.8
-          args:                
-            - "--logdir"
-            - "/tf-output/training_summaries"
+          image: tensorflow/tensorflow:1.9.0
           imagePullPolicy: Always
           volumeMounts:
-            - mountPath: /tf-output
-              name: azure-managed-disk
+            - name: azure-files
+              mountPath: /tf-logs
+              subPath: tfjob1b-edsheeran
           ports:
             - containerPort: 6006
-              protocol: TCP
+              protocol: TCP              
