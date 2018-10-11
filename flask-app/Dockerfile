@@ -1,5 +1,4 @@
-FROM tensorflow/tensorflow:1.9.0
-#FROM python:2
+FROM python:2.7.15
 
 WORKDIR /usr/src/app
 
@@ -10,6 +9,9 @@ COPY . .
 
 EXPOSE 5000
 
-CMD [ "python", "./app.py" ]
+#ENV FLASK_APP app.py
+#ENV FLASK_DEBUG 1
+#CMD [ "python",  "-m", "flask", "run" ]
 
-#FLASK_APP=app.py FLASK_DEBUG=1 python -m flask run
+ENTRYPOINT ["python"]
+CMD ["app.py"]
