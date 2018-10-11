@@ -260,11 +260,25 @@ az acr task create \
 
 ### Model Serving
 
-1. Python Flask App
+* Python Flask App
 
+    Running local: 
+    ```bash
+    FLASK_APP=app.py FLASK_DEBUG=1 python -m flask run
+
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/edsheeran.jpg" http://localhost:5000/detect_image
+
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/bradpitt.jpg" http://localhost:5000/detect_image
+
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/brianredmond.jpg" http://localhost:5000/detect_image
+    ```
+
+    In container:
+    ```bash
     docker build -t chzbrgr71/edsheeran-flask-app:1.0 .
+    ```
 
-2. Tensorflow Serving
+* Tensorflow Serving
 
 
 ### Brigade
