@@ -1,0 +1,62 @@
+apiVersion: kubeflow.org/v1alpha2
+kind: TFJob
+metadata:
+  name: tfjob-retrain-edsheeran-azfile-dist
+spec:
+  tfReplicaSpecs:
+    MASTER:
+      replicas: 1
+      template:
+        spec:
+          volumes:
+            - name: azurefile
+              persistentVolumeClaim:
+                claimName: azurefile
+          containers:
+          - image: ritazh/image-retrain-dist:1.9-gpu
+            name: tensorflow
+            args:                
+            - "--bottleneck_dir=bottlenecks"
+            - "--model_dir=/tmp/tensorflow/tf-output/inception"
+            - "--summaries_dir=/tmp/tensorflow/tf-output/training_summaries/baseline"
+            - "--output_graph=/tmp/tensorflow/tf-output/retrained_graph.pb"
+            - "--output_labels=/tmp/tensorflow/tf-output/retrained_labels.txt"
+            - "--image_dir=images"        
+            imagePullPolicy: Always
+            resources:
+              limits:
+                nvidia.com/gpu: 1
+            volumeMounts:
+              - mountPath: /tmp/tensorflow
+                subPath: edsheeran-dist
+                name: azurefile
+          restartPolicy: OnFailure
+    WORKER:
+      replicas: 2
+      template:
+        spec:
+          volumes:
+            - name: azurefile
+              persistentVolumeClaim:
+                claimName: azurefile
+          containers:
+          - image: ritazh/image-retrain-dist:1.9-gpu  
+            name: tensorflow
+            args:                
+            - "--image_dir=images"        
+            imagePullPolicy: Always
+            resources:
+              limits:
+                nvidia.com/gpu: 1
+          restartPolicy: OnFailure
+    PS:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - image: ritazh/image-retrain-dist:1.9
+            name: tensorflow
+            args:                
+            - "--image_dir=images"        
+            imagePullPolicy: Always
+          restartPolicy: OnFailure
