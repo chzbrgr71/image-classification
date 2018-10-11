@@ -126,7 +126,6 @@
     kubectl get pods -n kubeflow
     ```
 
-
 ### Setup Azure Storage
 
 Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
@@ -157,33 +156,23 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 
 ### Host Training on Kubeflow (TFJob)
-
-* Mix of Azure Disk and Azure Files
-
-
-    ```bash
-    kubectl create -f ./kubeflow/tfjob-training-disk-and-files.yaml
     
-    # after completed, then run:
-    kubectl delete tfjob tfjob-training-disk-and-files
-
-    # need step to run a pod and download model file
-    ```
-    
-* Azure Files only
+* Azure Files only (Training demo)
 
     ```bash
     kubectl create -f ./kubeflow/tfjob-training-azfile.yaml
 
+    # after
     kubectl create -f ./kubeflow/tfjob-training-tensorboard-azfile.yaml
     ```
 
 * Download model (while TB pod is running)
+
     ```bash        
     # to download model from pod
-    PODNAME=<pod name>
-    kubectl cp default/$PODNAME:/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
-    kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
+    PODNAME=tfjob-training-azfile-tensorboard-67bb6dc9df-zqxgw
+    kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
+    kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
     ```
 
 * Run Tensorboard manually (using tensorboard-standalone.yaml)
@@ -191,6 +180,15 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
     ```bash
     # exec into pod
     tensorboard --logdir /tf-output/training_summaries
+    ```
+
+* Mix of Azure Disk and Azure Files (optional)
+
+    ```bash
+    kubectl create -f ./kubeflow/tfjob-training-disk-and-files.yaml
+    
+    # after completed, then run:
+    kubectl delete tfjob tfjob-training-disk-and-files
     ```
 
 * Test locally
@@ -306,7 +304,7 @@ This section shows how to implement Brigade for CI/CD jobs related to our image 
     helm install --name brig-proj-training brigade/brigade-project -f brig-proj-training.yaml
     ```
 
-* Get webhook
+* Github webhook
 
     ```bash
     export GH_WEBHOOK=http://$(kubectl get svc brigade-brigade-github-gw -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):7744/events/github

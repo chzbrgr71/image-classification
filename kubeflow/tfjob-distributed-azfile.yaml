@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob
 metadata:
-  name: tfjob-retrain-edsheeran-azfile-dist
+  name: tfjob-distributed-azfile
 spec:
   tfReplicaSpecs:
     MASTER:
