@@ -158,7 +158,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 ### Host Training on Kubeflow (TFJob)
 
-* Deploy TFJob and tensorboard together
+* Deploy TFJob and tensorboard together (preferred)
 
     Run TFJob and Tensorboard together (split storage with Azure Disk/Files)
         ```bash
@@ -231,6 +231,30 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
     python label-image2.py bradpitt.jpg
     ```
 
+### Distributed Tensorflow
+
+* Create Docker image
+
+    ```bash
+    export IMAGE_TAG=1.0-gpu
+
+    # build
+    docker build -t chzbrgr71/distributed-tf:$IMAGE_TAG -f ./dist-training/Dockerfile ./dist-training
+
+    # push
+    docker push chzbrgr71/distributed-tf:$IMAGE_TAG
+    ```
+
+* Deploy TFJob
+
+    ```bash
+    kubectl create -f ./kubeflow/tfjob1-retrain-edsheeran-azfile-dist.yaml
+    ```
+
+    ```bash
+    kubectl create -f ./kubeflow/tfjob1-tensorboard-azfile-dist.yaml
+    ```
+
 ### Hyperparameter Sweep Demo
 
 This step requires Azure Files PVC to be available
@@ -272,7 +296,7 @@ az acr task create \
 
     curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/brianredmond.jpg" http://localhost:5000/detect_image
 
-    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/edsheeran.jpg" http://104.42.184.241:5000/detect_image
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/edsheeran.jpg" http://40.78.47.97:5000/detect_image
     ```
 
     In container:

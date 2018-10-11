@@ -9,11 +9,11 @@ spec:
       template:
         spec:
           volumes:
-            - name: azurefile
+            - name: azure-files
               persistentVolumeClaim:
-                claimName: azurefile
+                claimName: azure-files
           containers:
-          - image: ritazh/image-retrain-dist:1.9-gpu
+          - image: chzbrgr71/distributed-tf:1.0-gpu
             name: tensorflow
             args:                
             - "--bottleneck_dir=bottlenecks"
@@ -29,18 +29,18 @@ spec:
             volumeMounts:
               - mountPath: /tmp/tensorflow
                 subPath: edsheeran-dist
-                name: azurefile
+                name: azure-files
           restartPolicy: OnFailure
     WORKER:
       replicas: 2
       template:
         spec:
           volumes:
-            - name: azurefile
+            - name: azure-files
               persistentVolumeClaim:
-                claimName: azurefile
+                claimName: azure-files
           containers:
-          - image: ritazh/image-retrain-dist:1.9-gpu  
+          - image: chzbrgr71/distributed-tf:1.0-gpu
             name: tensorflow
             args:                
             - "--image_dir=images"        
@@ -54,7 +54,7 @@ spec:
       template:
         spec:
           containers:
-          - image: ritazh/image-retrain-dist:1.9
+          - image: chzbrgr71/distributed-tf:1.0-gpu
             name: tensorflow
             args:                
             - "--image_dir=images"        

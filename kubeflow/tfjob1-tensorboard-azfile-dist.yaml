@@ -30,19 +30,19 @@ spec:
         app: tfjob1-tensorboard
     spec:
       volumes:
-        - name: disk-retrain-edsheeran
+        - name: azure-files
           persistentVolumeClaim:
-            claimName: azurefile
+            claimName: azure-files
       containers:
         - name: tensorflow
-          image: ritazh/tensorboard:1.9
+          image: chzbrgr71/tensorboard:1.8
           args:                
             - "--logdir"
             - "/tmp/edsheeran-dist/logs"
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /tmp
-              name: disk-retrain-edsheeran
+              name: azure-files
           ports:
             - containerPort: 6006
               protocol: TCP
