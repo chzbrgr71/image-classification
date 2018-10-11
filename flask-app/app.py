@@ -28,7 +28,7 @@ def detect_image():
         ===/////
         ===/////
     """)
-#background: url({{ url_for('static', filename="edsheeran.png")}}) no-repeat center;
+    
     #Filter files with valid image extension, return None by default
     request_image = ([ request.files[f] for f in request.files if f.lower().endswith(ALLOWED_EXTENSIONS) ] or [None])[0]
     
