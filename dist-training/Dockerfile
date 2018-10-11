@@ -1,5 +1,5 @@
-#FROM tensorflow/tensorflow:1.9.0
-FROM tensorflow/tensorflow:1.9.0-gpu
+FROM tensorflow/tensorflow:1.9.0
+#FROM tensorflow/tensorflow:1.9.0-gpu
 
 WORKDIR /
 

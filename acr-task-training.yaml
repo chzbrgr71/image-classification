@@ -1,0 +1,13 @@
+version: 1.0-preview-1
+steps:
+  - id: build-image
+    build: -t {{.Run.Registry}}/chzbrgr71/image-retrain:acr-task-{{.Run.ID}} .
+  - id: push-image
+    push: ["{{.Run.Registry}}/chzbrgr71/image-retrain:acr-task-{{.Run.ID}}"]
+  - id: slack-notify
+    cmd: technosophos/slack-notify:latest
+    env:
+      - SLACK_WEBHOOK={{.Values.SLACK_WEBHOOK}}
+      - SLACK_CHANNEL="general"
+      - SLACK_USERNAME="Azure Container Registry Task"
+      - SLACK_MESSAGE="ACR Task docker build complete. Training command-> helm install --name image-retrain --set image={{.Run.Registry}}/chzbrgr71/image-retrain,imageTag=acr-task-{{.Run.ID}} ./chart"

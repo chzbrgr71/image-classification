@@ -1,0 +1,32 @@
+apiVersion: kubeflow.org/v1alpha2
+kind: TFJob
+metadata:
+  name: tfjob-training-azfile
+spec:
+  tfReplicaSpecs:
+    MASTER:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - image: chzbrgr71/image-retrain:1.8-gpu
+              name: tensorflow
+              args:                
+              - "--bottleneck_dir=bottlenecks"
+              - "--model_dir=/tmp/tensorflow/tf-output/inception"
+              - "--summaries_dir=/tmp/tensorflow/tf-output/training_summaries/baseline"
+              - "--output_graph=/tmp/tensorflow/tf-output/retrained_graph.pb"
+              - "--output_labels=/tmp/tensorflow/tf-output/retrained_labels.txt"
+              - "--image_dir=images"          
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - name: azure-files
+                  mountPath: /tmp/tensorflow
+                  subPath: tfjob-training-azfile
+          restartPolicy: OnFailure
+          volumes:
+            - name: azure-files
+              persistentVolumeClaim:
+                claimName: azure-files

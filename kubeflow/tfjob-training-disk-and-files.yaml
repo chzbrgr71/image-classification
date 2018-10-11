@@ -13,7 +13,7 @@ spec:
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob
 metadata:
-  name: tfjob1b-retrain-edsheeran
+  name: tfjob-training-disk-and-files
 spec:
   tfReplicaSpecs:
     MASTER:

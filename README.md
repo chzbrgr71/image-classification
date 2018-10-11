@@ -99,7 +99,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet5
+    APP_NAME=kf-ksonnet6
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -133,8 +133,8 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 Setup storage account for Azure Files
 ```bash
-export RG_NAME=briar-kubeflow-02
-export STORAGE=briartfjobstorage02
+export RG_NAME=briar-kubeflow-03
+export STORAGE=briartfjobstorage
 
 az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
 ```
@@ -158,52 +158,25 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 ### Host Training on Kubeflow (TFJob)
 
-* Deploy TFJob and tensorboard together (preferred)
+* Mix of Azure Disk and Azure Files
 
-    Run TFJob and Tensorboard together (split storage with Azure Disk/Files)
-        ```bash
-        kubectl create -f ./kubeflow/tfjob1b-retrain-edsheeran.yaml
-        
-        # after completed, then run:
-        kubectl delete tfjob tfjob1b-retrain-edsheeran
 
-        # need step to run a pod and download model file
-        ```
+    ```bash
+    kubectl create -f ./kubeflow/tfjob-training-disk-and-files.yaml
+    
+    # after completed, then run:
+    kubectl delete tfjob tfjob-training-disk-and-files
 
-* Run seperately with Azure Disk only
+    # need step to run a pod and download model file
+    ```
+    
+* Azure Files only
 
-    1. Run TFJob (either for ed sheeran or pets) 
-        ```bash
-        kubectl create -f ./kubeflow/tfjob1-retrain-edsheeran.yaml
+    ```bash
+    kubectl create -f ./kubeflow/tfjob-training-azfile.yaml
 
-        # after completed, then run:
-        kubectl delete tfjob tfjob-retrain-edsheeran
-        ```
-
-        OR 
-
-        ```bash
-        kubectl create -f ./kubeflow/tfjob2-retrain-pets.yaml
-
-        # after completed, then run:
-        kubectl delete tfjob tfjob-retrain-pets
-        ```
-
-    2. Run Tensorboard (must wait for above to complete)
-        ```bash
-        kubectl create -f ./kubeflow/tfjob1-tensorboard.yaml
-        ```
-
-        OR
-
-        ```bash
-        kubectl create -f ./kubeflow/tfjob2-tensorboard.yaml
-        ```
-
-        ```bash
-        # exec into pod
-        tensorboard --logdir /tf-output/training_summaries
-        ```
+    kubectl create -f ./kubeflow/tfjob-training-tensorboard-azfile.yaml
+    ```
 
 * Download model (while TB pod is running)
     ```bash        
@@ -213,10 +186,11 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
     kubectl cp default/$PODNAME:/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
     ```
 
-* Clean up
+* Run Tensorboard manually (using tensorboard-standalone.yaml)
+
     ```bash
-    kubectl delete -f ./kubeflow/tfjob1-tensorboard.yaml
-    kubectl delete pvc disk-retrain-edsheeran
+    # exec into pod
+    tensorboard --logdir /tf-output/training_summaries
     ```
 
 * Test locally
@@ -236,7 +210,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 * Create Docker image
 
     ```bash
-    export IMAGE_TAG=1.0-gpu
+    export IMAGE_TAG=1.0
 
     # build
     docker build -t chzbrgr71/distributed-tf:$IMAGE_TAG -f ./dist-training/Dockerfile ./dist-training
@@ -248,11 +222,11 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 * Deploy TFJob
 
     ```bash
-    kubectl create -f ./kubeflow/tfjob1-retrain-edsheeran-azfile-dist.yaml
+    kubectl create -f ./kubeflow/tfjob-distributed-azfile.yaml
     ```
 
     ```bash
-    kubectl create -f ./kubeflow/tfjob1-tensorboard-azfile-dist.yaml
+    kubectl create -f ./kubeflow/tfjob-distributed-tensorboard-azfile.yaml
     ```
 
 ### Hyperparameter Sweep Demo
