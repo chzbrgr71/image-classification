@@ -14,7 +14,7 @@
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob # Each one of our trainings will be a separate TFJob
 metadata:
-  name: tfjob-retrain-edsheeran-{{ $i }}-{{ $j }} # We give a unique name to each training
+  name: tfjob-hps-edsheeran-{{ $i }}-{{ $j }} # We give a unique name to each training
   labels:
     chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"
 spec: 
@@ -29,7 +29,7 @@ spec:
                 # Here we pass a unique learning rate and batch size to each instance.
                 # We also put the values between quotes to avoid potential formatting issues    
                 # We save the output in a different directory for each pod
-                - "--bottleneck_dir=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/bottlenecks"
+                - "--bottleneck_dir=bottlenecks"
                 - "--model_dir=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/inception"
                 - "--summaries_dir=/tf-output/training_summaries/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/baseline"
                 - "--output_graph=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/retrained_graph.pb"
@@ -46,7 +46,7 @@ spec:
 {{ end }}
               volumeMounts:
               - mountPath: /tf-output
-                subPath: tfjob-retrain-edsheeran # As usual we want to save everything in a separate subdirectory 
+                subPath: tfjob-hps # As usual we want to save everything in a separate subdirectory 
                 name: azure-files
           volumes:
             - name: azure-files
@@ -99,7 +99,7 @@ spec:
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /tf-output
-              subPath: tfjob-retrain-edsheeran
+              subPath: tfjob-hps
               name: azure-files
           ports:
             - containerPort: 6006

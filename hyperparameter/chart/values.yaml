@@ -6,6 +6,5 @@ hyperParamValues:
     - 0.01
     - 1.0
   train_batch_size:
-    - 25
     - 50
     - 100

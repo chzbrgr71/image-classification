@@ -257,7 +257,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 ### Hyperparameter Sweep Demo
 
-This step requires Azure Files PVC to be available
+This step requires Azure Files PVC to be available and 6 nodes in VMSS.
 
 ```bash
 helm install --name image-retrain-hyperparam ./hyperparameter/chart
