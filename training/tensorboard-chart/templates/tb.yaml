@@ -30,9 +30,9 @@ spec:
         app: {{.Values.tensorboard.name}}
     spec:
       volumes:
-        - name: azure-files
+        - name: {{.Values.container.pvcName}}
           persistentVolumeClaim:
-            claimName: azure-files
+            claimName: {{.Values.container.pvcName}}
       containers:
       - name: tensorboard
         image: {{.Values.container.image}}:{{.Values.container.imageTag}}
@@ -44,7 +44,7 @@ spec:
         - /tmp/tensorflow
         volumeMounts:
           - mountPath: /tmp/tensorflow
-            name: azure-files
+            name: {{.Values.container.pvcName}}
         ports:
         - containerPort: 6006
           protocol: TCP

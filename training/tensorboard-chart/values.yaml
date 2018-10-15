@@ -2,5 +2,6 @@ tensorboard:
   name: tfjob-training-azfile
 
 container:
-  image: tensorflow/tensorflow
+  image: briaracreu.azurecr.io/tensorflow/tensorflow
   imageTag: 1.9.0
+  pvcName: azure-files

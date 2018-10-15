@@ -89,7 +89,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet6
+    APP_NAME=kf-ksonnet7
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -122,10 +122,11 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 Setup storage account for Azure Files
 ```bash
-export RG_NAME=briar-kubeflow-03
-export STORAGE=briartfjobstorage
+export RG_NAME=briar-kubeflow-eu-01
+export LOCATION=westeurope
+export STORAGE=briartfjobstorage02
 
-az storage account create --resource-group $RG_NAME --name $STORAGE --sku Standard_LRS
+az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 ```
 
 Setup StorageClass, Roles, and PVC's
@@ -157,9 +158,9 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
     ```bash
     # helm
-    helm install --set container.image=briaracr.azurecr.io/chzbrgr71/image-retrain,container.imageTag=acr-task-ca1h,tfjob.name=tfjob-yourname ./training/chart
+    helm install --set container.image=briaracreu.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.0,container.pvcName=azure-files2,tfjob.name=tfjob-brianredmond ./training/chart
 
-    helm install --set tensorboard.name=tensorboard-name ./training/tensorboard-chart
+    helm install --set tensorboard.name=tensorboard-brianredmond,container.pvcName=azure-files2 ./training/tensorboard-chart
     ```
 
 * Download model (while TB pod is running)

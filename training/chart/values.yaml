@@ -4,6 +4,7 @@ tfjob:
 container:
   image: briaracr.azurecr.io/chzbrgr71/image-retrain
   imageTag: 1.0
+  pvcName: azure-files
 
 training:
   randomcrop: 5

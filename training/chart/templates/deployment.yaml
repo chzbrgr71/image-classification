@@ -27,11 +27,11 @@ spec:
                 limits:
                   nvidia.com/gpu: 1
               volumeMounts:
-                - name: azure-files
+                - name: {{.Values.container.pvcName}}
                   mountPath: /tmp/tensorflow
                   subPath: {{.Values.tfjob.name}}
           restartPolicy: OnFailure
           volumes:
-            - name: azure-files
+            - name: {{.Values.container.pvcName}}
               persistentVolumeClaim:
-                claimName: azure-files        
+                claimName: {{.Values.container.pvcName}}
