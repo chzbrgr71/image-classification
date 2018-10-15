@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Simple transfer learning with an Inception v3 architecture model which
-displays summaries in TensorBoard.
+displays summaries in TensorBoard
 
 This example shows how to take a Inception v3 architecture model trained on
 ImageNet images, and train a new top layer that can recognize other classes of
 images.
 
-The top layer receives as input a 2048-dimensional vector for each image. We
+The top layer receives as input a 2048-dimensional vector for each images. We
 train a softmax layer on top of this representation. Assuming the softmax layer
 contains N labels, this corresponds to learning N + 2048*N model parameters
 corresponding to the learned biases and weights.

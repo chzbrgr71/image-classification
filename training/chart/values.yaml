@@ -1,0 +1,13 @@
+tfjob:
+  name: tfjob-training-azfile
+
+container:
+  image: briaracr.azurecr.io/chzbrgr71/image-retrain
+  imageTag: 1.0
+
+training:
+  randomcrop: 5
+  randomscale: 5
+  randombrightness: 5
+  learningrate: 0.01
+  trainingbatchsize: 100 

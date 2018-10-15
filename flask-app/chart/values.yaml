@@ -1,0 +1,13 @@
+# Default values for chart
+
+service:
+  type: LoadBalancer
+  port: 5000
+
+deploy:
+  name: flask-tf
+  replicas: 3
+  acrServer: briaracr.azurecr.io
+  image: chzbrgr71/edsheeran-flask-app
+  imageTag: 1.5
+  containerPort: 5000

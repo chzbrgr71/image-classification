@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{.Values.deploy.name}}"
+spec:
+  replicas: {{ default 1 .Values.deploy.replicas }}
+  selector:
+    matchLabels:
+      app: flask-tf
+  template:
+    metadata:
+      labels:
+        app: flask-tf
+    spec:
+      containers:
+        - image: "{{.Values.deploy.image}}:{{.Values.deploy.imageTag}}"
+          imagePullPolicy: Always
+          name: flask-tf
+          ports:
+          - containerPort: {{.Values.deploy.containerPort}}
+            protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-tf
+  labels:
+    name: flask-tf
+spec:
+  type: "{{.Values.service.type}}"
+  ports:
+  - name: http
+    port: {{.Values.service.port}}
+    targetPort: {{.Values.service.port}}
+  selector:
+    app: flask-tf

@@ -44,7 +44,7 @@ def detect_image():
     #Final dict result to jsonify
     result = {
         "image": "",
-        "is_ed_sheehan": None,
+        "is_ed_sheeran": None,
         "confidence" : 0.0
     }
 
@@ -65,7 +65,7 @@ def detect_image():
         tf.import_graph_def(graph_def, name='')
 
     with tf.Session() as sess:
-        # Feed the image_data as input to the graph and get first prediction
+        # Feed the image_data as input to the graph and get first prediction.
         softmax_tensor = sess.graph.get_tensor_by_name('final_result:0')
         
         predictions = sess.run(softmax_tensor, \
@@ -77,15 +77,15 @@ def detect_image():
         
         score = predictions[0][0]
 
-        if score > 0.5:
+        if score > 0.51:
             print('I am confident this is Ed Sheeran (%s)' % (score))
-            result["is_ed_sheehan"] = 1
+            result["is_ed_sheeran"] = 1
             result["confidence"] = float(score)
 
 
         else:
             print('This is not Ed Sheeran (%s)' % (score))
-            result["is_ed_sheehan"] = 0
+            result["is_ed_sheeran"] = 0
             result["confidence"] = float(score)
    
     encoded_json = json.dumps(result)

@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.tensorboard.name}}
+  labels:
+    name: {{.Values.tensorboard.name}}
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 6006
+  selector:
+    app: {{.Values.tensorboard.name}}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: {{.Values.tensorboard.name}}
+  name: {{.Values.tensorboard.name}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{.Values.tensorboard.name}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.tensorboard.name}}
+    spec:
+      volumes:
+        - name: azure-files
+          persistentVolumeClaim:
+            claimName: azure-files
+      containers:
+      - name: tensorboard
+        image: {{.Values.container.image}}:{{.Values.container.imageTag}}
+        imagePullPolicy: Always
+        command:
+         - /usr/local/bin/tensorboard
+        args:
+        - --logdir
+        - /tmp/tensorflow
+        volumeMounts:
+          - mountPath: /tmp/tensorflow
+            name: azure-files
+        ports:
+        - containerPort: 6006
+          protocol: TCP
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
