@@ -1,0 +1,9 @@
+tfjob:
+  name: tfjob-dist-training
+
+container:
+  image: chzbrgr71/distributed-tf
+  imageTag: 1.0
+
+training:
+  workercount: 2

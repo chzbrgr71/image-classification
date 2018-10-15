@@ -175,6 +175,13 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
     kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
     ```
 
+* Clean-up
+
+    ```bash
+    kubectl delete -f ./kubeflow/tfjob-training-azfile.yaml
+    kubectl delete -f ./kubeflow/tfjob-training-tensorboard-azfile.yaml
+    ```
+
 * Run Tensorboard manually (using tensorboard-standalone.yaml)
 
     ```bash
@@ -227,17 +234,24 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
     kubectl create -f ./kubeflow/tfjob-distributed-tensorboard-azfile.yaml
     ```
 
+* Helm Chart
+
+    ```bash
+    helm install --set container.image=chzbrgr71/distributed-tf,container.imageTag=1.0,training.workercount=2,tfjob.name=tfjob-dist-brian ./dist-training/chart
+    ```
+    
+
 ### Hyperparameter Sweep Demo
 
-This step requires Azure Files PVC to be available and 6 nodes in VMSS.
+This step requires Azure Files PVC to be available and 7 nodes in VMSS.
 
 ```bash
-helm install --name image-retrain-hyperparam ./hyperparameter/chart
+helm install --set tfjob.name=tfjob-hyperparam-sweep ./hyperparameter/chart
 ```
 
 ### Azure Container Registry Tasks Demo
 
-This demo is in a separate repo. https://github.com/chzbrgr71/image-training 
+* This demo is in a separate repo. https://github.com/chzbrgr71/image-training 
 
 ```bash
 ACR_NAME=briaracr    
@@ -253,6 +267,11 @@ az acr task create \
     --git-access-token $GIT_PAT \
     --set-secret SLACK_WEBHOOK=$SLACK_WEBHOOK
 ```
+
+* Create helm container for deployment with service principal (Steve Lasker)
+
+https://github.com/AzureCR/cmd/tree/master/helm 
+
 
 ### Model Serving
 

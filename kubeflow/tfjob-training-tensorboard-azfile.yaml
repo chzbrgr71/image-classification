@@ -43,7 +43,6 @@ spec:
           volumeMounts:
             - name: azure-files
               mountPath: /tmp/tensorflow
-              subPath: tfjob-training-azfile
           ports:
             - containerPort: 6006
               protocol: TCP              

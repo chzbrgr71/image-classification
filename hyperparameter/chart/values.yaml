@@ -1,3 +1,4 @@
+name: tfjob-hyperparam-sweep
 image: chzbrgr71/image-retrain:1.8-gpu
 useGPU: true
 hyperParamValues:

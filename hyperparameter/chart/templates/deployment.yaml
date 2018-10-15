@@ -3,6 +3,7 @@
 {{- $lrlist := .Values.hyperParamValues.learning_rate -}}
 {{- $batchsizelist := .Values.hyperParamValues.train_batch_size -}}
 {{- $image := .Values.image -}}
+{{- $name := .Values.name -}}
 {{- $useGPU := .Values.useGPU -}}
 {{- $chartname := .Chart.Name -}}
 {{- $chartversion := .Chart.Version -}}
@@ -14,7 +15,7 @@
 apiVersion: kubeflow.org/v1alpha2
 kind: TFJob # Each one of our trainings will be a separate TFJob
 metadata:
-  name: tfjob-hps-edsheeran-{{ $i }}-{{ $j }} # We give a unique name to each training
+  name: {{ $name }}-{{ $i }}-{{ $j }} # We give a unique name to each training
   labels:
     chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"
 spec: 
