@@ -2,9 +2,9 @@
 # First we copy the values of values.yaml in variable to make it easier to access them
 {{- $lrlist := .Values.hyperParamValues.learning_rate -}}
 {{- $batchsizelist := .Values.hyperParamValues.train_batch_size -}}
-{{- $image := .Values.image -}}
-{{- $name := .Values.name -}}
-{{- $useGPU := .Values.useGPU -}}
+{{- $image := .Values.container.image -}}
+{{- $name := .Values.tfjob.name -}}
+{{- $useGPU := .Values.tfjob.useGPU -}}
 {{- $chartname := .Chart.Name -}}
 {{- $chartversion := .Chart.Version -}}
 
@@ -48,11 +48,11 @@ spec:
               volumeMounts:
               - mountPath: /tf-output
                 subPath: tfjob-hps # As usual we want to save everything in a separate subdirectory 
-                name: azure-files
+                name: {{.Values.pvcName}}
           volumes:
-            - name: azure-files
+            - name: {{.Values.pvcName}}
               persistentVolumeClaim:
-                claimName: azure-files
+                claimName: {{.Values.pvcName}}
 ---
 {{- end }}
 {{- end }}
@@ -88,9 +88,9 @@ spec:
         app: tensorboard-hyperparam-sweep
     spec:
       volumes:
-        - name: azure-files
+        - name: {{.Values.pvcName}}
           persistentVolumeClaim:
-            claimName: azure-files
+            claimName: {{.Values.pvcName}}
       containers:
         - name: tensorflow
           image: chzbrgr71/tensorboard:1.8
@@ -101,7 +101,7 @@ spec:
           volumeMounts:
             - mountPath: /tf-output
               subPath: tfjob-hps
-              name: azure-files
+              name: {{.Values.pvcName}}
           ports:
             - containerPort: 6006
               protocol: TCP

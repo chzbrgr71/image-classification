@@ -4,6 +4,7 @@ tfjob:
 container:
   image: chzbrgr71/distributed-tf
   imageTag: 1.0
+  pvcName: azure-files
 
 training:
   workercount: 2

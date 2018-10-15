@@ -9,9 +9,9 @@ spec:
       template:
         spec:
           volumes:
-            - name: azure-files
+            - name: {{.Values.container.pvcName}}
               persistentVolumeClaim:
-                claimName: azure-files
+                claimName: {{.Values.container.pvcName}}
           containers:
           - image: {{.Values.container.image}}:{{.Values.container.imageTag}}
             name: tensorflow
@@ -29,16 +29,16 @@ spec:
             volumeMounts:
               - mountPath: /tmp/tensorflow
                 subPath: {{.Values.tfjob.name}}
-                name: azure-files
+                name: {{.Values.container.pvcName}}
           restartPolicy: OnFailure
     WORKER:
       replicas: {{.Values.training.workercount}}
       template:
         spec:
           volumes:
-            - name: azure-files
+            - name: {{.Values.container.pvcName}}
               persistentVolumeClaim:
-                claimName: azure-files
+                claimName: {{.Values.container.pvcName}}
           containers:
           - image: {{.Values.container.image}}:{{.Values.container.imageTag}}
             name: tensorflow

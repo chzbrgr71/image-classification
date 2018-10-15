@@ -218,7 +218,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 * Helm Chart
 
     ```bash
-    helm install --set container.image=chzbrgr71/distributed-tf,container.imageTag=1.0,training.workercount=2,tfjob.name=tfjob-dist-brian ./dist-training/chart
+    helm install --set container.image=chzbrgr71/distributed-tf,container.imageTag=1.0,training.workercount=2,container.pvcName=azure-files2,tfjob.name=tfjob-dist-brian ./dist-training/chart
     ```
     
 ### Hyperparameter Sweep Demo
@@ -226,7 +226,7 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 This step requires Azure Files PVC to be available and 7 nodes in VMSS.
 
 ```bash
-helm install --set tfjob.name=tfjob-hyperparam-sweep ./hyperparameter/chart
+helm install --set tfjob.name=tfjob-hyperparam-sweep,container.pvcName=azure-files ./hyperparameter/chart
 ```
 
 ### Azure Container Registry Tasks Demo
