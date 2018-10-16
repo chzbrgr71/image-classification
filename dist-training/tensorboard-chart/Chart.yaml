@@ -1,4 +1,4 @@
 apiVersion: v1
 description: A Helm chart for Kubernetes
-name: tensorboard-training
+name: tensorboard-dist-training
 version: 0.1.0

@@ -1,9 +1,9 @@
 tfjob:
-  name: tfjob-training-azfile
-
+  name: tfjob-image-training
+  
 container:
-  image: briaracr.azurecr.io/chzbrgr71/image-retrain
-  imageTag: 1.0
+  image: briaracreu.azurecr.io/chzbrgr71/image-retrain
+  imageTag: 1.8-gpu
   pvcName: azure-files
 
 training:

@@ -89,7 +89,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet7
+    APP_NAME=kf-ksonnet8
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -122,45 +122,41 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 Setup storage account for Azure Files
 ```bash
-export RG_NAME=briar-kubeflow-eu-01
+export RG_NAME=briar-kubeflow-eu-02
 export LOCATION=westeurope
-export STORAGE=briartfjobstorage02
 
+export STORAGE=briartfjobstorage
+az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
+export STORAGE=briartfjobbackup
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 ```
 
 Setup StorageClass, Roles, and PVC's
 ```bash
-kubectl create -f ./k8s-setup/azure-file-sc.yaml
-kubectl create -f ./k8s-setup/azure-file-pvc.yaml
-# kubectl create -f ./k8s-setup/azure-pvc-roles.yaml
+kubectl create -f ./k8s-setup/storage-class-files-tf.yaml
+kubectl create -f ./k8s-setup/storage-class-files-backup.yaml
+kubectl create -f ./k8s-setup/pvc-azure-files.yaml
+kubectl create -f ./k8s-setup/pvc-azure-files-backup.yaml
 ```
 
 Check status
 ```bash
 kubectl get pvc
 
-NAME          STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS          AGE
-azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RWX            kubeflow-azurefiles   4h
+NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                 AGE
+azure-files          Bound    pvc-1ad80160-d152-11e8-b6b2-000d3a397c96   10Gi       RWX            storage-class-files-tf       8s
+azure-files-backup   Bound    pvc-1b41fb5c-d152-11e8-b6b2-000d3a397c96   10Gi       RWX            storage-class-files-backup   8s
 ```
 
-
-### Run Training on Kubeflow (TFJob)
+### Run Training on Kubeflow
     
-* Azure Files only (Training demo)
-
-    ```bash
-    kubectl create -f ./kubeflow/tfjob-training-azfile.yaml
-
-    # after
-    kubectl create -f ./kubeflow/tfjob-training-tensorboard-azfile.yaml
-    ```
+* Image Classification Re-training TFJob (Inception)
 
     ```bash
     # helm
-    helm install --set container.image=briaracreu.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.0,container.pvcName=azure-files2,tfjob.name=tfjob-brianredmond ./training/chart
+    helm install --set container.image=briaracreu.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.8-gpu,container.pvcName=azure-files-backup,tfjob.name=tfjob-image-training ./training/chart
 
-    helm install --set tensorboard.name=tensorboard-brianredmond,container.pvcName=azure-files2 ./training/tensorboard-chart
+    helm install --set tensorboard.name=tensorboard-image-training,container.pvcName=azure-files-backup,container.subPath=tfjob-image-training ./training/tensorboard-chart
     ```
 
 * Download model (while TB pod is running)
@@ -193,6 +189,8 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
 
 ### Distributed Tensorflow
 
+This step requires 4 nodes in VMSS.
+
 * Create Docker image
 
     ```bash
@@ -205,29 +203,23 @@ azure-files   Bound     pvc-04be9bb2-c89a-11e8-85b2-000d3a4ede1b   5Gi        RW
     docker push chzbrgr71/distributed-tf:$IMAGE_TAG
     ```
 
-* Deploy TFJob
-
-    ```bash
-    kubectl create -f ./kubeflow/tfjob-distributed-azfile.yaml
-    ```
-
-    ```bash
-    kubectl create -f ./kubeflow/tfjob-distributed-tensorboard-azfile.yaml
-    ```
-
 * Helm Chart
 
     ```bash
-    helm install --set container.image=chzbrgr71/distributed-tf,container.imageTag=1.0,training.workercount=2,container.pvcName=azure-files2,tfjob.name=tfjob-dist-brian ./dist-training/chart
+    helm install --set container.image=briaracreu.azurecr.io/chzbrgr71/distributed-tf,container.imageTag=1.0,training.workercount=2,container.pvcName=azure-files-backup,tfjob.name=tfjob-dist-training ./dist-training/chart
+
+    helm install --set tensorboard.name=tensorboard-dist-training,container.pvcName=azure-files-backup,container.subPath=tfjob-dist-training ./training/tensorboard-chart
     ```
     
 ### Hyperparameter Sweep Demo
 
-This step requires Azure Files PVC to be available and 7 nodes in VMSS.
+This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
 
-```bash
-helm install --set tfjob.name=tfjob-hyperparam-sweep,container.pvcName=azure-files ./hyperparameter/chart
-```
+    ```bash
+    helm install --set tfjob.name=tfjob-hyperparam-sweep,container.image=briaracreu.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files-backup ./hyperparameter/chart
+
+    helm install --set tensorboard.name=tensorboard-hyperparam-sweep,container.pvcName=azure-files-backup,container.subPath=tfjob-hps ./hyperparameter/tensorboard-chart
+    ```
 
 ### Azure Container Registry Tasks Demo
 
@@ -278,33 +270,3 @@ https://github.com/AzureCR/cmd/tree/master/helm
 
     docker run -d --name flask -p 5000:5000 chzbrgr71/edsheeran-flask-app:1.1
     ```
-
-### Brigade
-
-This section shows how to implement Brigade for CI/CD jobs related to our image classification model. 
-
-* Install Brigade https://brigade.sh 
-    ```bash
-    helm repo add brigade https://azure.github.io/brigade
-
-    helm install -n brigade brigade/brigade --set vacuum.enabled=false
-
-    kubectl create clusterrolebinding serviceaccounts-admin --clusterrole=cluster-admin --group=system:serviceaccounts
-    ```
-
-* Create project for training
-
-    Using a separate GH repo for training and serving.
-
-    ```bash
-    helm install --name brig-proj-training brigade/brigade-project -f brig-proj-training.yaml
-    ```
-
-* Github webhook
-
-    ```bash
-    export GH_WEBHOOK=http://$(kubectl get svc brigade-brigade-github-gw -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):7744/events/github
-    echo $GH_WEBHOOK
-    echo $GH_WEBHOOK | pbcopy
-    ```
-

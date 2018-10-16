@@ -1,8 +1,8 @@
 tensorboard:
-  name: tensorboard-training
+  name: tensorboard-hyperparam-sweep
 
 container:
   image: briaracreu.azurecr.io/tensorflow/tensorflow
   imageTag: 1.9.0
   pvcName: azure-files
-  subPath: tfjob-image-training
+  subPath: tfjob-hps
