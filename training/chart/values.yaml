@@ -2,7 +2,7 @@ tfjob:
   name: tfjob-image-training
   
 container:
-  image: briaracreu.azurecr.io/chzbrgr71/image-retrain
+  image: briar.azurecr.io/chzbrgr71/image-retrain
   imageTag: 1.8-gpu
   pvcName: azure-files
 

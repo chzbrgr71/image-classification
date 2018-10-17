@@ -2,7 +2,7 @@ tfjob:
   name: tfjob-dist-training
 
 container:
-  image: chzbrgr71/distributed-tf
+  image: briar.azurecr.io/chzbrgr71/distributed-tf
   imageTag: 1.0
   pvcName: azure-files
 
