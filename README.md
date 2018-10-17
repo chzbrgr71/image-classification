@@ -187,6 +187,16 @@ azure-files-backup   Bound    pvc-1b41fb5c-d152-11e8-b6b2-000d3a397c96   10Gi   
     python label-image.py bradpitt.jpg
     python label-image.py ed-sheeran-puppet.jpg
     ```
+    
+### Hyperparameter Sweep Demo
+
+This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
+
+```bash
+helm install --set tfjob.name=tfjob-hyperparam-sweep,container.image=briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files-backup ./hyperparameter/chart
+
+helm install --set tensorboard.name=tensorboard-hyperparam-sweep,container.pvcName=azure-files-backup,container.subPath=tfjob-hps ./hyperparameter/tensorboard-chart
+```
 
 ### Distributed Tensorflow
 
@@ -207,20 +217,10 @@ This step requires 4 nodes in VMSS.
 * Helm Chart
 
     ```bash
-    helm install --set container.image=briar.azurecr.io/chzbrgr71/distributed-tf,container.imageTag=1.0,training.workercount=2,container.pvcName=azure-files-backup,tfjob.name=tfjob-dist-training ./dist-training/chart
+    helm install --set container.image=briar.azurecr.io/chzbrgr71/distributed-tf,container.imageTag=1.8,training.workercount=2,container.pvcName=azure-files-backup,tfjob.name=tfjob-dist-training ./dist-training/chart
 
     helm install --set tensorboard.name=tensorboard-dist-training,container.pvcName=azure-files-backup,container.subPath=tfjob-dist-training ./training/tensorboard-chart
     ```
-    
-### Hyperparameter Sweep Demo
-
-This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
-
-```bash
-helm install --set tfjob.name=tfjob-hyperparam-sweep,container.image=briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files-backup ./hyperparameter/chart
-
-helm install --set tensorboard.name=tensorboard-hyperparam-sweep,container.pvcName=azure-files-backup,container.subPath=tfjob-hps ./hyperparameter/tensorboard-chart
-```
 
 ### Azure Container Registry Tasks Demo
 
