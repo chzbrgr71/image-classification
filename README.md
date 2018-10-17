@@ -122,12 +122,12 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 Setup storage account for Azure Files
 ```bash
-export RG_NAME=briar-kubeflow-eu-02
+export RG_NAME=briar-kubeflow-eu-01
 export LOCATION=westeurope
 
-export STORAGE=briartfjobstorage
+export STORAGE=briartfjobstorage01
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
-export STORAGE=briartfjobbackup
+export STORAGE=briartfjobbackup01
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 ```
 
@@ -163,7 +163,7 @@ azure-files-backup   Bound    pvc-1b41fb5c-d152-11e8-b6b2-000d3a397c96   10Gi   
 
     ```bash        
     # to download model from pod
-    PODNAME=tfjob-training-azfile-tensorboard-67bb6dc9df-zqxgw
+    PODNAME=tensorboard-image-training-677fc97b59-g5k64
     kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
     kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
     ```
@@ -183,8 +183,9 @@ azure-files-backup   Bound    pvc-1b41fb5c-d152-11e8-b6b2-000d3a397c96   10Gi   
         --workdir /brianredmond  \
         tensorflow/tensorflow:1.9.0 bash
 
-    python label-image2.py edsheeran.jpg
-    python label-image2.py bradpitt.jpg
+    python label-image.py edsheeran.jpg
+    python label-image.py bradpitt.jpg
+    python label-image.py ed-sheeran-puppet.jpg
     ```
 
 ### Distributed Tensorflow
@@ -194,7 +195,7 @@ This step requires 4 nodes in VMSS.
 * Create Docker image
 
     ```bash
-    export IMAGE_TAG=1.0
+    export IMAGE_TAG=1.8
 
     # build
     docker build -t chzbrgr71/distributed-tf:$IMAGE_TAG -f ./dist-training/Dockerfile ./dist-training
@@ -215,11 +216,11 @@ This step requires 4 nodes in VMSS.
 
 This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
 
-    ```bash
-    helm install --set tfjob.name=tfjob-hyperparam-sweep,container.image=briaracreu.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files-backup ./hyperparameter/chart
+```bash
+helm install --set tfjob.name=tfjob-hyperparam-sweep,container.image=briaracreu.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files-backup ./hyperparameter/chart
 
-    helm install --set tensorboard.name=tensorboard-hyperparam-sweep,container.pvcName=azure-files-backup,container.subPath=tfjob-hps ./hyperparameter/tensorboard-chart
-    ```
+helm install --set tensorboard.name=tensorboard-hyperparam-sweep,container.pvcName=azure-files-backup,container.subPath=tfjob-hps ./hyperparameter/tensorboard-chart
+```
 
 ### Azure Container Registry Tasks Demo
 
