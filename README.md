@@ -120,32 +120,54 @@
 
 Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
 
-Setup storage account for Azure Files
+* briar-kubeflow-eu-01
+
 ```bash
 export RG_NAME=briar-kubeflow-eu-01
 export LOCATION=westeurope
 
-export STORAGE=briartfjobstorage01
+export STORAGE=briartfjob01
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 export STORAGE=briartfjobbackup01
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 ```
 
-Setup StorageClass, Roles, and PVC's
+Setup StorageClass and PVC's
 ```bash
-kubectl create -f ./k8s-setup/storage-class-files-tf.yaml
-kubectl create -f ./k8s-setup/storage-class-files-backup.yaml
-kubectl create -f ./k8s-setup/pvc-azure-files.yaml
-kubectl create -f ./k8s-setup/pvc-azure-files-backup.yaml
+kubectl create -f ./k8s-setup/sc-eu-01.yaml
+kubectl create -f ./k8s-setup/sc-eu-01-backup.yaml
+kubectl create -f ./k8s-setup/pvc-eu-01.yaml
+kubectl create -f ./k8s-setup/pvc-eu-01-backup.yaml
 ```
 
-Check status
+* briar-kubeflow-eu-02
+
+```bash
+export RG_NAME=briar-kubeflow-eu-02
+export LOCATION=westeurope
+
+export STORAGE=briartfjob02
+az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
+export STORAGE=briartfjobbackup02
+az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
+```
+
+Setup StorageClass and PVC's
+```bash
+kubectl create -f ./k8s-setup/sc-eu-02.yaml
+kubectl create -f ./k8s-setup/sc-eu-02-backup.yaml
+kubectl create -f ./k8s-setup/pvc-eu-02.yaml
+kubectl create -f ./k8s-setup/pvc-eu-02-backup.yaml
+```
+
+* Check status
+
 ```bash
 kubectl get pvc
 
-NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                 AGE
-azure-files          Bound    pvc-1ad80160-d152-11e8-b6b2-000d3a397c96   10Gi       RWX            storage-class-files-tf       8s
-azure-files-backup   Bound    pvc-1b41fb5c-d152-11e8-b6b2-000d3a397c96   10Gi       RWX            storage-class-files-backup   8s
+NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi       RWX            sc-eu-01          14s
+azure-files-backup   Bound    pvc-ff142681-d46b-11e8-9a30-000d3a47182f   10Gi       RWX            sc-eu-01-backup   13s
 ```
 
 ### Run Training on Kubeflow
@@ -271,3 +293,16 @@ https://github.com/AzureCR/cmd/tree/master/helm
 
     docker run -d --name flask -p 5000:5000 chzbrgr71/edsheeran-flask-app:1.1
     ```
+
+### Argo
+
+* Setup Minio
+
+
+
+
+
+
+
+
+

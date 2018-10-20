@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: azure-files-backup
+  name: azure-files
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: storage-class-files-backup
+  storageClassName: sc-eu-02
   resources:
     requests:
       storage: 10Gi
