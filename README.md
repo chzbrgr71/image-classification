@@ -176,16 +176,16 @@ azure-files-backup   Bound    pvc-ff142681-d46b-11e8-9a30-000d3a47182f   10Gi   
 
     ```bash
     # helm
-    helm install --set container.image=briar.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.8-gpu,container.pvcName=azure-files-backup,tfjob.name=tfjob-image-training ./training/chart
+    helm install --set container.image=briar.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.8-gpu,container.pvcName=azure-files,tfjob.name=tfjob-image-training ./training/chart
 
-    helm install --set tensorboard.name=tensorboard-image-training,container.pvcName=azure-files-backup,container.subPath=tfjob-image-training ./training/tensorboard-chart
+    helm install --set tensorboard.name=tensorboard-image-training,container.pvcName=azure-files,container.subPath=tfjob-image-training ./training/tensorboard-chart
     ```
 
 * Download model (while TB pod is running)
 
     ```bash        
     # to download model from pod
-    PODNAME=tensorboard-image-training-677fc97b59-g5k64
+    PODNAME=
     kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_graph.pb ~/Downloads/retrained_graph.pb
     kubectl cp default/$PODNAME:/tmp/tensorflow/tf-output/retrained_labels.txt ~/Downloads/retrained_labels.txt
     ```
@@ -215,9 +215,9 @@ azure-files-backup   Bound    pvc-ff142681-d46b-11e8-9a30-000d3a47182f   10Gi   
 This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
 
 ```bash
-helm install --set tfjob.name=tfjob-hyperparam-sweep,container.image=briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files-backup ./hyperparameter/chart
+helm install --set tfjob.name=tfjob-hyperparam-sweep2,container.image=briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files ./hyperparameter/chart
 
-helm install --set tensorboard.name=tensorboard-hyperparam-sweep,container.pvcName=azure-files-backup,container.subPath=tfjob-hps ./hyperparameter/tensorboard-chart
+helm install --set tensorboard.name=tensorboard-hyperparam-sweep2,container.pvcName=azure-files,container.subPath=tfjob-hps2 ./hyperparameter/tensorboard-chart
 ```
 
 ### Distributed Tensorflow
@@ -239,9 +239,9 @@ This step requires 4 nodes in VMSS.
 * Helm Chart
 
     ```bash
-    helm install --set container.image=briar.azurecr.io/chzbrgr71/distributed-tf,container.imageTag=1.8,training.workercount=2,container.pvcName=azure-files-backup,tfjob.name=tfjob-dist-training ./dist-training/chart
+    helm install --set container.image=briar.azurecr.io/chzbrgr71/distributed-tf,container.imageTag=1.8,training.workercount=2,container.pvcName=azure-files,tfjob.name=tfjob-dist-training2 ./dist-training/chart
 
-    helm install --set tensorboard.name=tensorboard-dist-training,container.pvcName=azure-files-backup,container.subPath=tfjob-dist-training ./training/tensorboard-chart
+    helm install --set tensorboard.name=tensorboard-dist-training2,container.pvcName=azure-files,container.subPath=tfjob-dist-training2 ./training/tensorboard-chart
     ```
 
 ### Azure Container Registry Tasks Demo

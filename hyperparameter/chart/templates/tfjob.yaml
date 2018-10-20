@@ -48,7 +48,7 @@ spec:
 {{ end }}
               volumeMounts:
               - mountPath: /tf-output
-                subPath: tfjob-hps # As usual we want to save everything in a separate subdirectory 
+                subPath: tfjob-hps2 # As usual we want to save everything in a separate subdirectory 
                 name: {{ $pvc }}
           volumes:
             - name: {{ $pvc }}
