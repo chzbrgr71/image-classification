@@ -8,10 +8,8 @@
     export IMAGE_TAG=1.8
     export IMAGE_TAG=1.8-gpu
 
-    # build
+    # build/push
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
-
-    # push
     docker push chzbrgr71/image-retrain:$IMAGE_TAG
 
     # run
@@ -22,17 +20,15 @@
     ```bash
     export IMAGE_TAG=1.8
 
-    # build
+    # build/push
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
-
-    # push
     docker push chzbrgr71/tensorboard:$IMAGE_TAG
 
     # run
     docker run -d --name tensorboard -p 80:6006 --volume /Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/tf-output:/tf-output chzbrgr71/tensorboard:$IMAGE_TAG "--logdir" "/tf-output/training_summaries"
     ```
 
-* Label Image with Trained Model
+* Test locally - label Image with trained model
     ```bash
     export IMAGE_TAG=1.8
 
@@ -49,7 +45,7 @@
 
 ### Setup Kubernetes
 
-* Using [acs-engine](https://github.com/Azure/acs-engine) with kubernetes v1.11.3
+* Use AKS or [acs-engine](https://github.com/Azure/acs-engine) with kubernetes v1.11.3
 
 * Enable Helm
 
@@ -62,15 +58,7 @@
 * Scale when needed
 
     ```bash
-    az vmss scale -n k8s-gpuagentpool-18712514-vmss -g briar-ml-110 --new-capacity 1 --no-wait
-    ```
-
-* AKS GPU Fix
-
-    https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#troubleshoot
-
-    ```bash
-    kubectl apply -f ./k8s-setup/nvidia-device-plugin-ds.yaml
+    az vmss scale -n k8s-gpuagentpool-12345678-vmss -g ml-100 --new-capacity 1 --no-wait
     ```
 
 ### Install Kubeflow
@@ -120,44 +108,20 @@
 
 Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/azure/aks/azure-disks-dynamic-pv 
 
-* briar-kubeflow-eu-01
+* kubeflow-eu-01
 
 ```bash
-export RG_NAME=briar-kubeflow-eu-01
+export RG_NAME=ml-100
 export LOCATION=westeurope
 
-export STORAGE=briartfjob01
-az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
-export STORAGE=briartfjobbackup01
+export STORAGE=tfjob01 #rename this. must be unique
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 ```
 
 Setup StorageClass and PVC's
 ```bash
 kubectl create -f ./k8s-setup/sc-eu-01.yaml
-kubectl create -f ./k8s-setup/sc-eu-01-backup.yaml
 kubectl create -f ./k8s-setup/pvc-eu-01.yaml
-kubectl create -f ./k8s-setup/pvc-eu-01-backup.yaml
-```
-
-* briar-kubeflow-eu-02
-
-```bash
-export RG_NAME=briar-kubeflow-eu-02
-export LOCATION=westeurope
-
-export STORAGE=briartfjob02
-az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
-export STORAGE=briartfjobbackup02
-az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
-```
-
-Setup StorageClass and PVC's
-```bash
-kubectl create -f ./k8s-setup/sc-eu-02.yaml
-kubectl create -f ./k8s-setup/sc-eu-02-backup.yaml
-kubectl create -f ./k8s-setup/pvc-eu-02.yaml
-kubectl create -f ./k8s-setup/pvc-eu-02-backup.yaml
 ```
 
 * Check status
@@ -167,7 +131,6 @@ kubectl get pvc
 
 NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
 azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi       RWX            sc-eu-01          14s
-azure-files-backup   Bound    pvc-ff142681-d46b-11e8-9a30-000d3a47182f   10Gi       RWX            sc-eu-01-backup   13s
 ```
 
 ### Run Training on Kubeflow
@@ -175,9 +138,10 @@ azure-files-backup   Bound    pvc-ff142681-d46b-11e8-9a30-000d3a47182f   10Gi   
 * Image Classification Re-training TFJob (Inception)
 
     ```bash
-    # helm
+    # TFJob
     helm install --set container.image=briar.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.8-gpu,container.pvcName=azure-files,tfjob.name=tfjob-image-training ./training/chart
 
+    # Tensorboard
     helm install --set tensorboard.name=tensorboard-image-training,container.pvcName=azure-files,container.subPath=tfjob-image-training ./training/tensorboard-chart
     ```
 
@@ -198,6 +162,7 @@ azure-files-backup   Bound    pvc-ff142681-d46b-11e8-9a30-000d3a47182f   10Gi   
     ```
 
 * Test locally
+
     ```bash
     docker run -it --rm --name tf \
         --publish 6006:6006 \
@@ -263,12 +228,9 @@ az acr task create \
     --set-secret SLACK_WEBHOOK=$SLACK_WEBHOOK
 ```
 
-* Create helm container for deployment with service principal (Steve Lasker)
-
-https://github.com/AzureCR/cmd/tree/master/helm 
-
-
 ### Model Serving
+
+* This demo is in a separate repo. https://github.com/chzbrgr71/flask-tf 
 
 * Python Flask App
 
@@ -281,8 +243,6 @@ https://github.com/AzureCR/cmd/tree/master/helm
     curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/bradpitt.jpg" http://localhost:5000/detect_image
 
     curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/brianredmond.jpg" http://localhost:5000/detect_image
-
-    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/edsheeran.jpg" http://40.78.47.97:5000/detect_image
     ```
 
     In container:
@@ -294,12 +254,34 @@ https://github.com/AzureCR/cmd/tree/master/helm
     docker run -d --name flask -p 5000:5000 chzbrgr71/edsheeran-flask-app:1.1
     ```
 
-### Argo
+* Create helm container for deployment with service principal (Steve Lasker) https://github.com/AzureCR/cmd/tree/master/helm 
 
-* Setup Minio
+* ACR Task / Github Webhook
 
+```bash
+ACR_NAME=
+GIT_PAT=
+SLACK_WEBHOOK=
+SP=
+PASSWORD=
+TENANT=
+CLUSTER_RESOURCE_GROUP=
+CLUSTER_NAME=
 
-
+az acr task create \
+    --registry $ACR_NAME \
+    --name flask-tf \
+    --context https://github.com/chzbrgr71/flask-tf.git \
+    --branch master \
+    --file acr-task.yaml \
+    --git-access-token $GIT_PAT \
+    --set-secret SLACK_WEBHOOK=$SLACK_WEBHOOK \
+    --set-secret SP=$SP \
+    --set-secret PASSWORD=$PASSWORD \
+    --set-secret TENANT=$TENANT \
+    --set-secret CLUSTER_RESOURCE_GROUP=$CLUSTER_RESOURCE_GROUP \
+    --set-secret CLUSTER_NAME=$CLUSTER_NAME
+```
 
 
 
