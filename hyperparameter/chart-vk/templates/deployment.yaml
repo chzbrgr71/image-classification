@@ -71,7 +71,10 @@ spec:
               azureFile:
                 secretName: azure-file-secret
                 shareName: datavk
-                readOnly: false
+                readOnly: false          
+          #  - name: azure-files
+          #    persistentVolumeClaim:
+          #      claimName: azure-files
           nodeSelector: # For VK
             kubernetes.io/role: agent
             beta.kubernetes.io/os: linux
@@ -123,7 +126,7 @@ spec:
             readOnly: false
       containers:
         - name: tensorflow
-          image: briaracr.azurecr.io/chzbrgr71/tensorboard:1.9
+          image: chzbrgr71/tensorboard:1.9
           args:                
             - "--logdir"
             - "/tf-output/training_summaries"
