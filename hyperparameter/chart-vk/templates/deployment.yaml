@@ -33,12 +33,12 @@ spec:
                 # Here we pass a unique learning rate and batch size to each instance.
                 # We also put the values between quotes to avoid potential formatting issues    
                 # We save the output in a different directory for each pod
-                - "--bottleneck_dir=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/bottlenecks"
-                - "--model_dir=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/inception"
+                - "--bottleneck_dir=/tmp/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/bottlenecks"
+                - "--model_dir=/tmp/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/inception"
                 - "--summaries_dir=/tf-output/training_summaries/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/baseline"
-                - "--output_graph=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/retrained_graph.pb"
-                - "--output_labels=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/retrained_labels.txt"
-                - "--saved_model_dir=/tf-output/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/saved_models/1"
+                - "--output_graph=/tmp/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/retrained_graph.pb"
+                - "--output_labels=/tmp/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/retrained_labels.txt"
+                - "--saved_model_dir=/tmp/image-retraining-lr{{ $lr }}-bs-{{ $batchsize }}/saved_models/1"
                 - "--image_dir=images"
                 - "--learning_rate"
                 - {{ $lr | quote }}
