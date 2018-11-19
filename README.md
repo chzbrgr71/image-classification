@@ -5,8 +5,8 @@
 
 * Training
     ```bash
-    export IMAGE_TAG=1.8
-    export IMAGE_TAG=1.8-gpu
+    export IMAGE_TAG=1.9
+    export IMAGE_TAG=1.9-gpu
 
     # build/push
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
@@ -18,7 +18,7 @@
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.8
+    export IMAGE_TAG=1.9
 
     # build/push
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
@@ -30,7 +30,7 @@
 
 * Test locally - label Image with trained model
     ```bash
-    export IMAGE_TAG=1.8
+    export IMAGE_TAG=1.9
 
     # build
     docker build -t chzbrgr71/tf-testing:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
@@ -61,6 +61,29 @@
     az vmss scale -n k8s-gpuagentpool-12345678-vmss -g ml-100 --new-capacity 1 --no-wait
     ```
 
+* Virtual Kubelet
+
+    Update YAML
+    ```yaml
+    targetAKS:
+    clientId:
+    clientKey:
+    tenantId:
+    subscriptionId:
+    aciRegion:
+    ```
+
+    Then install the Virtual Kubelet chart in your cluster
+    ```bash
+    export VK_RELEASE=virtual-kubelet-latest
+    CHART_URL=https://github.com/virtual-kubelet/virtual-kubelet/raw/master/charts/$VK_RELEASE.tgz
+    helm install --name vk "$CHART_URL" -f ./hyperparameter/virtual-kubelet/values.yaml
+
+    kubectl get nodes
+    ...
+    virtual-kubelet                     Ready     agent     5s        v1.11.2
+    ```
+
 ### Install Kubeflow
 
 * First, install ksonnet version [0.9.2](https://ksonnet.io/#get-started).
@@ -77,7 +100,7 @@
     VERSION=v0.2.2
 
     # Initialize a ksonnet app. Set the namespace for it's default environment.
-    APP_NAME=kf-ksonnet8
+    APP_NAME=kf-ksonnet10
     ks init ${APP_NAME}
     cd ${APP_NAME}
     ks env set default --namespace ${NAMESPACE}
@@ -91,6 +114,7 @@
 
     # Create templates for core components
     ks generate kubeflow-core kubeflow-core
+    ks generate argo kubeflow-argo --name=kubeflow-argo --namespace=${NAMESPACE}
 
     # Customize Kubeflow's installation for AKS or acs-engine
     # ks param set kubeflow-core cloud aks
@@ -99,6 +123,7 @@
 
     # Deploy Kubeflow
     ks apply default -c kubeflow-core
+    ks apply default -c kubeflow-argo
 
     # Check status
     kubectl get pods -n kubeflow
@@ -111,8 +136,8 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 * kubeflow-eu-01
 
 ```bash
-export RG_NAME=ml-100
-export LOCATION=westeurope
+export RG_NAME=briar-tf-training
+export LOCATION=eastus
 
 export STORAGE=tfjob01 #rename this. must be unique
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
@@ -139,7 +164,7 @@ azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi   
 
     ```bash
     # TFJob
-    helm install --set container.image=briar.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.8-gpu,container.pvcName=azure-files,tfjob.name=tfjob-image-training ./training/chart
+    helm install --set container.image=briaracr.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.9-gpu,container.pvcName=azure-files,tfjob.name=tfjob-image-training ./training/chart
 
     # Tensorboard
     helm install --set tensorboard.name=tensorboard-image-training,container.pvcName=azure-files,container.subPath=tfjob-image-training ./training/tensorboard-chart
@@ -183,6 +208,11 @@ This step requires 6-7 nodes in VMSS. Uses the same container image as standard 
 helm install --set tfjob.name=tfjob-hyperparam-sweep2,container.image=briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files ./hyperparameter/chart
 
 helm install --set tensorboard.name=tensorboard-hyperparam-sweep2,container.pvcName=azure-files,container.subPath=tfjob-hps2 ./hyperparameter/tensorboard-chart
+```
+
+ACI + Virtual Kubelet
+```bash
+helm install --name image-retrain-hyperparam ./hyperparameter/chart-vk
 ```
 
 ### Distributed Tensorflow

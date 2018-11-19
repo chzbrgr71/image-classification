@@ -2,7 +2,7 @@ tensorboard:
   name: tensorboard-training
 
 container:
-  image: briar.azurecr.io/tensorflow/tensorflow
-  imageTag: 1.9.0
+  image: briaracr.azurecr.io/chzbrgr71/tensorboard
+  imageTag: 1.9
   pvcName: azure-files
   subPath: tfjob-image-training
