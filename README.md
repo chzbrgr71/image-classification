@@ -244,6 +244,21 @@ kubectl create secret generic azure-file-secret --from-literal=azurestorageaccou
 helm install --name tfjob-hyperparam-aci ./hyperparameter/chart-vk
 ```
 
+### Pytorch Operator
+
+```bash
+# mnist
+kubectl apply -f ./pytorch/pytorch_job_mnist_gloo.yaml
+
+# smoke-dist
+kubectl apply -f ./pytorch/pytorch_job_sendrecv.yaml
+```
+
+### Chainer
+
+```bash
+kubectl apply -f ./chainer/chainer-job-mn.yaml
+```
 
 ### Distributed Tensorflow
 

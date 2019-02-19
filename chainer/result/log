@@ -1,0 +1,16 @@
+[
+    {
+        "elapsed_time": 228.73465490341187, 
+        "main/loss": 32535.205899277553, 
+        "validation/main/loss": 33276.64876741976, 
+        "iteration": 930, 
+        "epoch": 1
+    }, 
+    {
+        "elapsed_time": 450.9990699291229, 
+        "main/loss": 31587.110824092742, 
+        "validation/main/loss": 32156.161700274493, 
+        "iteration": 1860, 
+        "epoch": 2
+    }
+]
