@@ -8,6 +8,6 @@ deploy:
   name: flask-tf
   replicas: 3
   acrServer: 
-  image: briar.azurecr.io/chzbrgr71/edsheeran-flask-app
+  image: briarhackfest.azurecr.io/chzbrgr71/edsheeran-flask-app
   imageTag: 1.5
   containerPort: 5000

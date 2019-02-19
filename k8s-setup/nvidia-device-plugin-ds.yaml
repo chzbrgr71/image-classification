@@ -4,7 +4,7 @@ metadata:
   labels:
     kubernetes.io/cluster-service: "true"
   name: nvidia-device-plugin
-  namespace: kube-system
+  namespace: gpu-resources
 spec:
   template:
     metadata:
@@ -22,7 +22,7 @@ spec:
       - key: CriticalAddonsOnly
         operator: Exists
       containers:
-      - image: nvidia/k8s-device-plugin:1.10 # Update this tag to match your Kubernetes version
+      - image: nvidia/k8s-device-plugin:1.11 # Update this tag to match your Kubernetes version
         name: nvidia-device-plugin-ctr
         securityContext:
           allowPrivilegeEscalation: false

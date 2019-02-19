@@ -1,4 +1,4 @@
-apiVersion: kubeflow.org/v1alpha2
+apiVersion: kubeflow.org/v1beta1
 kind: TFJob
 metadata:
   name: {{.Values.tfjob.name}}
@@ -23,9 +23,9 @@ spec:
                 #- "--random_brightness={{.Values.training.randombrightness}}"
                 #- "--learning_rate={{.Values.training.learningrate}}"
                 #- "--train_batch_size={{.Values.training.trainingbatchsize}}"
-              resources:
-                limits:
-                  nvidia.com/gpu: 1
+              #resources:
+              #  limits:
+              #    nvidia.com/gpu: 1
               volumeMounts:
                 - name: {{.Values.container.pvcName}}
                   mountPath: /tmp/tensorflow

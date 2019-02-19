@@ -3,7 +3,7 @@ tfjob:
   useGPU: true
 
 container:
-  image: briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu
+  image: briarhackfest.azurecr.io/chzbrgr71/image-retrain:1.10-gpu
   pvcName: azure-files
 
 hyperParamValues:

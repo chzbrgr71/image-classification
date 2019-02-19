@@ -5,8 +5,8 @@
 
 * Training
     ```bash
-    export IMAGE_TAG=1.9
-    export IMAGE_TAG=1.9-gpu
+    export IMAGE_TAG=1.10
+    export IMAGE_TAG=1.10-gpu
 
     # build/push
     docker build -t chzbrgr71/image-retrain:$IMAGE_TAG -f ./training/Dockerfile ./training
@@ -18,7 +18,7 @@
 
 * Tensorboard
     ```bash
-    export IMAGE_TAG=1.9
+    export IMAGE_TAG=1.10
 
     # build/push
     docker build -t chzbrgr71/tensorboard:$IMAGE_TAG -f ./training/Dockerfile.tensorboard ./training
@@ -30,7 +30,7 @@
 
 * Test locally - label Image with trained model
     ```bash
-    export IMAGE_TAG=1.9
+    export IMAGE_TAG=1.10
 
     # build
     docker build -t chzbrgr71/tf-testing:$IMAGE_TAG -f ./label-image/Dockerfile ./label-image
@@ -137,9 +137,10 @@ Setup PVC components to persist data in pods. https://docs.microsoft.com/en-us/a
 
 ```bash
 export RG_NAME=briar-tf-training
+export RG_NAME=MC_briar-aks-ml-gpu_briar-aks-ml-gpu_eastus
 export LOCATION=eastus
 
-export STORAGE=tfjob01 #rename this. must be unique
+export STORAGE=briartfjob02 #rename this. must be unique
 az storage account create --resource-group $RG_NAME --name $STORAGE --location $LOCATION --sku Standard_LRS
 ```
 
@@ -164,10 +165,10 @@ azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi   
 
     ```bash
     # TFJob
-    helm install --set container.image=briaracr.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.9-gpu,container.pvcName=azure-files,tfjob.name=tfjob-image-training ./training/chart
+    helm install --name tfjob-image-training-02 --set container.image=briarhackfest.azurecr.io/chzbrgr71/image-retrain,container.imageTag=1.10-gpu,container.pvcName=pvc-azure-files,tfjob.name=tfjob-image-training-02 ./training/chart
 
     # Tensorboard
-    helm install --set tensorboard.name=tensorboard-image-training,container.pvcName=azure-files,container.subPath=tfjob-image-training ./training/tensorboard-chart
+    helm install --name tb-image-training-02 --set tensorboard.name=tensorboard-image-training-02,container.pvcName=pvc-azure-files,container.subPath=tfjob-image-training-02 ./training/tensorboard-chart
     ```
 
 * Download model (while TB pod is running)
@@ -205,15 +206,44 @@ azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi   
 This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
 
 ```bash
-helm install --set tfjob.name=tfjob-hyperparam-sweep2,container.image=briar.azurecr.io/chzbrgr71/image-retrain:1.8-gpu,container.pvcName=azure-files ./hyperparameter/chart
+helm install --name tfjob-hyperparam2 --set tfjob.name=tfjob-hyperparam-sweep1,container.image=briarhackfest.azurecr.io/chzbrgr71/image-retrain:1.10-gpu,container.pvcName=pvc-azure-files ./hyperparameter/chart
 
-helm install --set tensorboard.name=tensorboard-hyperparam-sweep2,container.pvcName=azure-files,container.subPath=tfjob-hps2 ./hyperparameter/tensorboard-chart
+helm install --name tb-hyperparam2 --set tensorboard.name=tensorboard-hyperparam-sweep1,container.pvcName=pvc-azure-files,container.subPath=tfjob-hps2 ./hyperparameter/tensorboard-chart
 ```
 
 ACI + Virtual Kubelet
+
+Use Azure Files Static for ACI's. https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
+
 ```bash
-helm install --name image-retrain-hyperparam ./hyperparameter/chart-vk
+AKS_PERS_STORAGE_ACCOUNT_NAME=briar$RANDOM
+AKS_PERS_RESOURCE_GROUP=briar-aks-ml-gpu
+AKS_PERS_LOCATION=eastus
+AKS_PERS_SHARE_NAME=aksshare
+
+# Create the storage account
+az storage account create -n $AKS_PERS_STORAGE_ACCOUNT_NAME -g $AKS_PERS_RESOURCE_GROUP -l $AKS_PERS_LOCATION --sku Standard_LRS
+
+# Export the connection string as an environment variable, this is used when creating the Azure file share
+export AZURE_STORAGE_CONNECTION_STRING=`az storage account show-connection-string -n $AKS_PERS_STORAGE_ACCOUNT_NAME -g $AKS_PERS_RESOURCE_GROUP -o tsv`
+
+# Create the file share
+az storage share create -n $AKS_PERS_SHARE_NAME
+
+# Get storage account key
+STORAGE_KEY=$(az storage account keys list --resource-group $AKS_PERS_RESOURCE_GROUP --account-name $AKS_PERS_STORAGE_ACCOUNT_NAME --query "[0].value" -o tsv)
+
+# Echo storage account name and key
+echo Storage account name: $AKS_PERS_STORAGE_ACCOUNT_NAME
+echo Storage account key: $STORAGE_KEY
+
+kubectl create secret generic azure-file-secret --from-literal=azurestorageaccountname=$AKS_PERS_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$STORAGE_KEY
 ```
+
+```bash
+helm install --name tfjob-hyperparam-aci ./hyperparameter/chart-vk
+```
+
 
 ### Distributed Tensorflow
 
@@ -277,11 +307,28 @@ az acr task create \
 
     In container:
     ```bash
-    docker build -t chzbrgr71/edsheeran-flask-app:1.1 .
+    IMAGE_TAG=1.5
 
-    docker push chzbrgr71/edsheeran-flask-app:1.1
+    docker build -t chzbrgr71/edsheeran-flask-app:$IMAGE_TAG -f ./flask-app/Dockerfile ./flask-app
 
-    docker run -d --name flask -p 5000:5000 chzbrgr71/edsheeran-flask-app:1.1
+    docker push chzbrgr71/edsheeran-flask-app:$IMAGE_TAG
+    docker tag chzbrgr71/edsheeran-flask-app:$IMAGE_TAG briarhackfest.azurecr.io/chzbrgr71/edsheeran-flask-app:$IMAGE_TAG
+    docker push briarhackfest.azurecr.io/chzbrgr71/edsheeran-flask-app:$IMAGE_TAG
+
+    docker run -d --name flask -p 5000:5000 chzbrgr71/edsheeran-flask-app:$IMAGE_TAG
+
+    helm upgrade --install flask-tf --set deploy.image=briarhackfest.azurecr.io/chzbrgr71/edsheeran-flask-app,deploy.imageTag=$IMAGE_TAG ./flask-app/chart
+    ```
+
+
+    Testing:
+    ```bash
+    IMAGE=edsheeran.jpg
+    IMAGE=bradpitt.jpg
+    IMAGE=brianredmond.jpg
+    IMAGE=ed-sheeran-puppet.jpg
+
+    IP=13.68.208.133 && curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/$IMAGE" http://$IP:5000/detect_image
     ```
 
 * Create helm container for deployment with service principal (Steve Lasker) https://github.com/AzureCR/cmd/tree/master/helm 

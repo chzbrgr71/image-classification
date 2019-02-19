@@ -13,7 +13,7 @@
 # This will result in create 1 TFJob for every pair of learning rate and train batch size
 {{- range $i, $lr := $lrlist }}
 {{- range $j, $batchsize := $batchsizelist }}
-apiVersion: kubeflow.org/v1alpha2
+apiVersion: kubeflow.org/v1beta1
 kind: TFJob # Each one of our trainings will be a separate TFJob
 metadata:
   name: {{ $name }}-{{ $i }}-{{ $j }} # We give a unique name to each training
