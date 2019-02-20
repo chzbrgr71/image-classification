@@ -44,6 +44,13 @@ spec:
                 - {{ $lr | quote }}
                 - "--train_batch_size"
                 - {{ $batchsize | quote }}
+              resources: 
+                requests:
+                  memory: 50G
+                  cpu: 5
+                limits:
+                  memory: 50G
+                  cpu: 5            
 {{ if $useGPU }}  # We only want to request GPUs if we asked for it in values.yaml with useGPU
                   nvidia.com/gpu: 1
 {{ end }}

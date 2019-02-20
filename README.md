@@ -211,7 +211,17 @@ helm install --name tfjob-hyperparam2 --set tfjob.name=tfjob-hyperparam-sweep1,c
 helm install --name tb-hyperparam2 --set tensorboard.name=tensorboard-hyperparam-sweep1,container.pvcName=pvc-azure-files,container.subPath=tfjob-hps2 ./hyperparameter/tensorboard-chart
 ```
 
-ACI + Virtual Kubelet
+#### ACI + Virtual Kubelet
+
+https://github.com/virtual-kubelet/virtual-kubelet/tree/aci-gpu 
+
+```bash
+# update values file as in the VK chart https://github.com/virtual-kubelet/virtual-kubelet/tree/aci-gpu/charts/virtual-kubelet 
+
+export VK_RELEASE=virtual-kubelet-latest
+CHART_URL=https://github.com/virtual-kubelet/virtual-kubelet/raw/master/charts/$VK_RELEASE.tgz
+helm install --name vk "$CHART_URL" -f ./values.yaml
+```
 
 Use Azure Files Static for ACI's. https://docs.microsoft.com/en-us/azure/aks/azure-files-volume 
 
