@@ -120,7 +120,7 @@ spec:
          - /usr/local/bin/tensorboard
         args:
         - --logdir
-        - /tmp/tensorflow
+        - /tf-output/training_summaries
         volumeMounts:
           - mountPath: /tf-output
             name: azure-files

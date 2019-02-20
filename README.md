@@ -171,6 +171,15 @@ azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi   
     helm install --name tb-image-training-02 --set tensorboard.name=tensorboard-image-training-02,container.pvcName=pvc-azure-files,container.subPath=tfjob-image-training-02 ./training/tensorboard-chart
     ```
 
+    ```bash
+    #testing
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/edsheeran.jpg" http://13.68.208.133:5000/detect_image
+    
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/brianredmond.jpg" http://13.68.208.133:5000/detect_image
+
+    curl -F "image.jpg=@/Users/brianredmond/gopath/src/github.com/chzbrgr71/image-classification/label-image/edsheeran.jpg" http://localhost:5000/detect_image
+    ```
+
 * Download model (while TB pod is running)
 
     ```bash        
@@ -206,7 +215,7 @@ azure-files          Bound    pvc-feecad38-d46b-11e8-9a30-000d3a47182f   10Gi   
 This step requires 6-7 nodes in VMSS. Uses the same container image as standard image re-training.
 
 ```bash
-helm install --name tfjob-hyperparam2 --set tfjob.name=tfjob-hyperparam-sweep1,container.image=briarhackfest.azurecr.io/chzbrgr71/image-retrain:1.10-gpu,container.pvcName=pvc-azure-files ./hyperparameter/chart
+helm install --name tfjob-hyperparam2 --set tfjob.name=tfjob-hyperparam-sweep2,container.image=briarhackfest.azurecr.io/chzbrgr71/image-retrain:1.10-gpu,container.pvcName=pvc-azure-files ./hyperparameter/chart
 
 helm install --name tb-hyperparam2 --set tensorboard.name=tensorboard-hyperparam-sweep1,container.pvcName=pvc-azure-files,container.subPath=tfjob-hps2 ./hyperparameter/tensorboard-chart
 ```
