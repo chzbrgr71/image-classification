@@ -5,6 +5,7 @@
 {{- $image := .Values.container.image -}}
 {{- $name := .Values.tfjob.name -}}
 {{- $pvc := .Values.container.pvcName -}}
+{{- $subPath := .Values.container.subPath -}}
 {{- $useGPU := .Values.tfjob.useGPU -}}
 {{- $chartname := .Chart.Name -}}
 {{- $chartversion := .Chart.Version -}}
@@ -48,7 +49,7 @@ spec:
 {{ end }}
               volumeMounts:
               - mountPath: /tf-output
-                subPath: tfjob-hps2 # As usual we want to save everything in a separate subdirectory 
+                subPath: {{ $subPath }}
                 name: {{ $pvc }}
           volumes:
             - name: {{ $pvc }}

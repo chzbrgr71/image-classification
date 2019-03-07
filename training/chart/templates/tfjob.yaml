@@ -17,19 +17,20 @@ spec:
                 - "--summaries_dir=/tmp/tensorflow/tf-output/training_summaries/baseline"
                 - "--output_graph=/tmp/tensorflow/tf-output/retrained_graph.pb"
                 - "--output_labels=/tmp/tensorflow/tf-output/retrained_labels.txt"
-                - "--image_dir=images"                   
+                - "--image_dir=images"
+                - "--saved_model_dir=/tmp/tensorflow/tf-output/saved_models/1"
                 #- "--random_crop={{.Values.training.randomcrop}}"
                 #- "--random_scale={{.Values.training.randomscale}}"
                 #- "--random_brightness={{.Values.training.randombrightness}}"
                 #- "--learning_rate={{.Values.training.learningrate}}"
                 #- "--train_batch_size={{.Values.training.trainingbatchsize}}"
-              #resources:
-              #  limits:
-              #    nvidia.com/gpu: 1
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
               volumeMounts:
                 - name: {{.Values.container.pvcName}}
                   mountPath: /tmp/tensorflow
-                  subPath: {{.Values.tfjob.name}}
+                  subPath: {{.Values.container.subPath}}
           restartPolicy: OnFailure
           volumes:
             - name: {{.Values.container.pvcName}}

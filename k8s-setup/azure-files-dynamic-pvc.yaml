@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: azure-files
+  name: pvc-azure-files-dynamic
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: sc-eu-02
+  storageClassName: azure-files-dynamic
   resources:
     requests:
       storage: 10Gi

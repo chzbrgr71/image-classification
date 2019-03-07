@@ -22,7 +22,7 @@ taint:
 providers:
   azure:
     ## Set to true if deploying to Azure Kubernetes Service (AKS), otherwise false
-    targetAKS: false
+    targetAKS: true
     clientId: 
     clientKey: 
     tenantId: 

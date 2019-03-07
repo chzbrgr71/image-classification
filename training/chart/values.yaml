@@ -3,8 +3,9 @@ tfjob:
   
 container:
   image: briaracr.azurecr.io/chzbrgr71/image-retrain
-  imageTag: 1.9-gpu
-  pvcName: azure-files
+  imageTag: 2.1-gpu
+  pvcName: pvc-azure-files-dynamic
+  subPath: tfjob-image-training
 
 training:
   randomcrop: 5

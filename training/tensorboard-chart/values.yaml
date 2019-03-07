@@ -2,7 +2,7 @@ tensorboard:
   name: tensorboard-training
 
 container:
-  image: briarhackfest.azurecr.io/chzbrgr71/image-retrain
-  imageTag: "1.10"
-  pvcName: pvc-azure-files
+  image: briaracr.azurecr.io/chzbrgr71/tensorboard
+  imageTag: "2.0"
+  pvcName: pvc-azure-files-dynamic
   subPath: tfjob-image-training
