@@ -460,7 +460,7 @@ This step requires 4 nodes in VMSS.
     export S3_TRAIN_BASE_URL=s3://${BUCKET_NAME}/models
     export AWS_REGION=us-east-1
     export JOB_NAME=myjob-$(uuidgen  | cut -c -5 | tr '[:upper:]' '[:lower:]')
-    export TF_MODEL_IMAGE=${DOCKER_BASE_URL}/chzbrgr71/image-retrain:2.0-gpu 
+    export TF_MODEL_IMAGE=${DOCKER_BASE_URL}/image-retrain:2.1-gpu
     export TF_WORKER=3
     export MODEL_TRAIN_STEPS=200
 
