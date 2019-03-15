@@ -220,6 +220,12 @@ Three choices for storage:
 
 ### Run Training on Kubeflow
     
+* Image Classification re-training k8s Job (Inception)
+
+    ```bash
+    kubectl apply -f ./training/training-job-aci.yaml
+    ```
+
 * Image Classification re-training TFJob (Inception)
 
     ```bash
