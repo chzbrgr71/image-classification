@@ -23,13 +23,13 @@ providers:
   azure:
     ## Set to true if deploying to Azure Kubernetes Service (AKS), otherwise false
     targetAKS: true
-    clientId: 
-    clientKey: 
-    tenantId: 
-    subscriptionId: 
+    clientId: 59343209-9d9e-464d-8508-068a3d331fb9
+    clientKey: d55a7984-3500-4f16-ace4-55414d2d6446
+    tenantId: 72f988bf-86f1-41af-91ab-2d7cd011db47
+    subscriptionId: 471d33fd-a776-405b-947c-467c291dc741
     ## `aciResourceGroup` and `aciRegion` are required only for non-AKS deployments
-    aciResourceGroup: 
-    aciRegion: 
+    aciResourceGroup: aci
+    aciRegion: eastus
     masterUri: 
     loganalytics:
       enabled: false

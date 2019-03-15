@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: image-class-training
+spec:
+  template:
+    metadata:
+      annotations:
+        virtual-kubelet.io/gpu-type: K80 # For ACI GPU
+    spec:
+      containers:
+      - name: image-class-training
+        image: chzbrgr71/image-retrain:2.1-gpu
+        args:                
+          - "--bottleneck_dir=/tmp/tensorflow/bottlenecks"
+          - "--model_dir=/tmp/tensorflow/inception"
+          - "--summaries_dir=/tmp/tensorflow/training_summaries/baseline"
+          - "--output_graph=/tmp/tensorflow/retrained_graph.pb"
+          - "--output_labels=/tmp/tensorflow/retrained_labels.txt"
+          - "--image_dir=/tmp/tensorflow/images"
+          - "--saved_model_dir=/tmp/tensorflow/saved_models/1"
+        resources:
+          requests:
+            memory: 50G
+            cpu: 5
+          limits:
+            memory: 50G
+            cpu: 5
+            nvidia.com/gpu: 1   
+      restartPolicy: Never     
+      nodeSelector: # For VK
+        kubernetes.io/role: agent
+        beta.kubernetes.io/os: linux
+        type: virtual-kubelet
+      tolerations: # For VK
+      - key: virtual-kubelet.io/provider
+        operator: Exists
+      - key: azure.com/aci
+        effect: NoSchedule            
